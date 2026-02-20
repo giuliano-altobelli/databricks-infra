@@ -46,6 +46,14 @@ locals {
   #   user_key => user
   #   if lower(trimspace(user.user_name)) != local.bootstrap_admin_user
   # }
+
+  # Optional Unity Catalog catalog grants for groups.
+  # Key must match a key in `local.identity_groups`.
+  # Value is the list of privileges for that group on the workspace catalog.
+  unity_catalog_group_catalog_privileges = {
+    # platform_admins = ["ALL_PRIVILEGES"]
+    # analytics_users = ["USE_CATALOG", "USE_SCHEMA", "SELECT"]
+  }
 }
 
 module "users_groups" {
@@ -61,4 +69,18 @@ module "users_groups" {
   users        = local.identity_users
 
   depends_on = [module.databricks_mws_workspace]
+}
+
+resource "databricks_grant" "unity_catalog_group_catalog_grants" {
+  provider = databricks.created_workspace
+  for_each = local.unity_catalog_group_catalog_privileges
+
+  catalog    = module.unity_catalog_catalog_creation.catalog_name
+  principal  = local.identity_groups[each.key].display_name
+  privileges = sort(each.value)
+
+  depends_on = [
+    module.users_groups,
+    module.unity_catalog_catalog_creation,
+  ]
 }
