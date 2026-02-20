@@ -1,0 +1,29 @@
+User Prompt (To The Implementor)
+
+  - “Create a Terraform module at infra/aws/dbx/databricks/us-west-1/modules/databricks_account/users_groups (account scope) using the repo template.”
+  - “Module purpose: create Databricks users and groups, then assign users to groups.”
+  - “Inputs:
+      - groups: map({ display_name = string }) keyed by a stable group key (e.g. data_eng).
+      - users: map({ user_name = string, display_name? = string, active? = bool, groups? = set(string) }) keyed by a stable user key (e.g. alice).”
+  - “Behavior:
+      - Create all users and groups from inputs.
+      - For each user, add memberships to the listed group keys.
+      - Fail if a user references a missing group key (don’t silently ignore).”
+  - “Outputs: maps of user_ids, group_ids, and (optional) membership_ids/membership_keys.”
+  - “Safety decisions to apply: prevent_destroy on users/groups (yes/no), and whether empty groups is allowed.”
+  - “Include a short usage example in module README.md.”
+
+  Files The User Should Fill Out
+
+  - Requester (you): .../users_groups/SPEC.md (the contract: scope, inputs/outputs, decisions, safety).
+  - Implementor (me/agent): .../users_groups/FACTS.md (only if docs are consulted; short facts + source pointers).
+  - Implementor: .../users_groups/variables.tf, .../users_groups/main.tf, .../users_groups/outputs.tf, .../users_groups/versions.tf, .../users_groups/README.md.
+
+  If you confirm databricks_account is correct (vs databricks_workspace) and your stance on prevent_destroy, I can generate the real module next.
+
+
+   Example prompt snippet you’d give an implementor:
+
+  Use Terraform Registry + Context7 for provider/resource details.
+  Do not paste docs into chat; distill into infra/aws/dbx/databricks/us-west-1/modules/<module>/FACTS.md.
+  Include source pointers (registry page or Context7 query topic) for every non-obvious argument/behavior.
