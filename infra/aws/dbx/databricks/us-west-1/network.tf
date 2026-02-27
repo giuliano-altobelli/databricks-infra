@@ -9,7 +9,7 @@ data "aws_prefix_list" "s3" {
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.1"
-  count   = var.network_configuration != "custom" ? 1 : 0
+  count   = local.enable_privatelink ? 1 : 0
 
   name = "${var.resource_prefix}-classic-compute-plane-vpc"
   cidr = var.vpc_cidr_range
@@ -35,7 +35,7 @@ module "vpc" {
 
 # Security group - skipped in custom mode
 resource "aws_security_group" "sg" {
-  count  = var.network_configuration != "custom" ? 1 : 0
+  count  = local.enable_privatelink ? 1 : 0
   name   = "${var.resource_prefix}-workspace-sg"
   vpc_id = module.vpc[0].vpc_id
 
@@ -74,7 +74,7 @@ resource "aws_security_group" "sg" {
   }
 
   dynamic "egress" {
-    for_each = var.network_configuration != "custom" ? [1] : []
+    for_each = local.enable_privatelink ? [1] : []
     content {
       description     = "S3 Gateway Endpoint - SG"
       from_port       = 443

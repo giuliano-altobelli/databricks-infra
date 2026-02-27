@@ -1,7 +1,7 @@
 # Security group for privatelink - skipped in custom operation mode
 
 resource "aws_security_group" "privatelink" {
-  count  = var.network_configuration != "custom" ? 1 : 0
+  count  = local.enable_privatelink ? 1 : 0
   name   = "${var.resource_prefix}-privatelink-sg"
   vpc_id = module.vpc[0].vpc_id
 
@@ -74,7 +74,7 @@ resource "aws_security_group" "privatelink" {
 
 # Restrictive S3 endpoint policy:
 data "aws_iam_policy_document" "s3_vpc_endpoint_policy" {
-  count = var.network_configuration != "custom" ? 1 : 0
+  count = local.enable_privatelink ? 1 : 0
 
   statement {
     sid    = "Grant access to Workspace Root Bucket"
@@ -123,8 +123,8 @@ data "aws_iam_policy_document" "s3_vpc_endpoint_policy" {
     }
 
     resources = [
-      "arn:${local.computed_aws_partition}:s3:::${var.resource_prefix}-catalog-${module.databricks_mws_workspace.workspace_id}/*",
-      "arn:${local.computed_aws_partition}:s3:::${var.resource_prefix}-catalog-${module.databricks_mws_workspace.workspace_id}"
+      "arn:${local.computed_aws_partition}:s3:::${var.resource_prefix}-catalog-${local.workspace_id}/*",
+      "arn:${local.computed_aws_partition}:s3:::${var.resource_prefix}-catalog-${local.workspace_id}"
     ]
 
     condition {
@@ -251,7 +251,7 @@ data "aws_iam_policy_document" "s3_vpc_endpoint_policy" {
 
 # Restrictive STS endpoint policy:
 data "aws_iam_policy_document" "sts_vpc_endpoint_policy" {
-  count = var.network_configuration != "custom" ? 1 : 0
+  count = local.enable_privatelink ? 1 : 0
 
   statement {
     actions = [
@@ -291,7 +291,7 @@ data "aws_iam_policy_document" "sts_vpc_endpoint_policy" {
 
 # Restrictive Kinesis endpoint policy:
 data "aws_iam_policy_document" "kinesis_vpc_endpoint_policy" {
-  count = var.network_configuration != "custom" ? 1 : 0
+  count = local.enable_privatelink ? 1 : 0
   statement {
     actions = [
       "kinesis:PutRecord",
@@ -310,7 +310,7 @@ data "aws_iam_policy_document" "kinesis_vpc_endpoint_policy" {
 
 # VPC endpoint creation - Skipped in custom operation mode
 module "vpc_endpoints" {
-  count = var.network_configuration != "custom" ? 1 : 0
+  count = local.enable_privatelink ? 1 : 0
 
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
   version = "3.11.0"
@@ -354,7 +354,7 @@ module "vpc_endpoints" {
 
 # Databricks REST endpoint - skipped in custom operation mode
 resource "aws_vpc_endpoint" "backend_rest" {
-  count = var.network_configuration != "custom" ? 1 : 0
+  count = local.enable_privatelink ? 1 : 0
 
   vpc_id              = module.vpc[0].vpc_id
   service_name        = var.databricks_gov_shard == "dod" ? var.workspace_config[var.region].secondary_endpoint : var.workspace_config[var.region].primary_endpoint
@@ -370,7 +370,7 @@ resource "aws_vpc_endpoint" "backend_rest" {
 
 # Databricks SCC endpoint - skipped in custom operation mode
 resource "aws_vpc_endpoint" "backend_relay" {
-  count = var.network_configuration != "custom" ? 1 : 0
+  count = local.enable_privatelink ? 1 : 0
 
   vpc_id              = module.vpc[0].vpc_id
   service_name        = var.databricks_gov_shard == "dod" ? var.scc_relay_config[var.region].secondary_endpoint : var.scc_relay_config[var.region].primary_endpoint

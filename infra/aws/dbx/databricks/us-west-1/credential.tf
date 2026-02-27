@@ -2,13 +2,20 @@
 
 # Cross Account Role
 data "databricks_aws_assume_role_policy" "this" {
+  count = local.create_workspace ? 1 : 0
+
   external_id   = var.databricks_account_id
   aws_partition = local.assume_role_partition
 }
 
+data "databricks_aws_crossaccount_policy" "this" {
+  count = (!local.is_enterprise && local.create_workspace) ? 1 : 0
+}
+
 resource "aws_iam_role" "cross_account_role" {
+  count              = local.create_workspace ? 1 : 0
   name               = "${var.resource_prefix}-cross-account"
-  assume_role_policy = data.databricks_aws_assume_role_policy.this.json
+  assume_role_policy = data.databricks_aws_assume_role_policy.this[0].json
   tags = {
     Name    = "${var.resource_prefix}-cross-account"
     Project = var.resource_prefix
@@ -16,9 +23,11 @@ resource "aws_iam_role" "cross_account_role" {
 }
 
 resource "aws_iam_role_policy" "cross_account" {
+  count = local.create_workspace ? 1 : 0
+
   name = "${var.resource_prefix}-crossaccount-policy"
-  role = aws_iam_role.cross_account_role.id
-  policy = jsonencode({
+  role = aws_iam_role.cross_account_role[0].id
+  policy = local.is_enterprise ? jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
@@ -274,7 +283,7 @@ resource "aws_iam_role_policy" "cross_account" {
       }
     ]
     }
-  )
+  ) : data.databricks_aws_crossaccount_policy.this[0].json
   depends_on = [
     module.vpc, aws_security_group.sg
   ]

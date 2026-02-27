@@ -1,91 +1,93 @@
 # =============================================================================
-# Configuration Variables for AWS and Databricks
+# Premium Trial Quickstart (Existing Workspace)
 # =============================================================================
+# This is the default and recommended path for trial accounts.
 
 # -----------------------------------------------------------------------------
-# AWS Variables
+# Required Core Variables
 # -----------------------------------------------------------------------------
-
-# AWS account ID where resources will be deployed
-aws_account_id = ""
-
-# AWS region for deployment
-region = ""
-
-# -----------------------------------------------------------------------------
-# Databricks Variables
-# -----------------------------------------------------------------------------
-
-# Admin user email for workspace and catalog management
-admin_user = ""
-
-# Databricks account ID
-databricks_account_id = ""
+aws_account_id         = "441735166692"
+region                 = "us-west-2"
+admin_user             = "giulianoaltobelli@gmail.com"
+databricks_account_id  = "535f803e-200e-4ff7-985a-7673a0f53375"
+resource_prefix        = "personal-infra"
 
 # -----------------------------------------------------------------------------
-# Resource Configuration
+# Workspace Selection (default: existing workspace)
 # -----------------------------------------------------------------------------
-
-# Prefix used for naming and tagging resources (e.g., S3 buckets, IAM roles)
-resource_prefix = ""
+pricing_tier           = "PREMIUM"
+workspace_source       = "existing"
+existing_workspace_host = "https://dbc-9edb2ce7-da55.cloud.databricks.com"
+existing_workspace_id   = "7474651824071073"
 
 # -----------------------------------------------------------------------------
 # Network Configuration
 # -----------------------------------------------------------------------------
+# managed  = Databricks-managed networking (recommended for trial)
+# isolated = Customer-managed isolated networking
+# custom   = Reuse existing customer networking assets
+network_configuration = "managed"
 
-# Network type: "custom" or "isolated" (see README.md for more information)
-network_configuration = "isolated"
+# -----------------------------------------------------------------------------
+# Unity Catalog Configuration (always enabled)
+# -----------------------------------------------------------------------------
+uc_catalog_mode          = "existing"
+uc_existing_catalog_name = "main"
 
-# ISOLATED NETWORK CONFIGURATION
-# Required when using network_configuration = "isolated"
-vpc_cidr_range           = "10.0.0.0/18"
-private_subnets_cidr     = ["10.0.0.0/22", "10.0.4.0/22", "10.0.8.0/22"]
-privatelink_subnets_cidr = ["10.0.28.0/26", "10.0.28.64/26", "10.0.28.128/26"]
-sg_egress_ports          = [443, 2443, 5432, 6666, 8443, 8444, 8445, 8446, 8447, 8448, 8449, 8450, 8451]
+# For Premium trial, prefer using an existing metastore.
+metastore_exists = true
 
-# CUSTOM NETWORK CONFIGURATION
-# Uncomment and configure the following variables for custom networking:
-# Required when using network_configure = "custom"
-# Ensure that an STS interface endpoint, a Kinesis endpoint, and an S3 gateway endpoint are available within the VPC and associated with private subnet route tables.
-# Ensure that Private DNS names have been enabled for Databricks PrivateLink endpoints.
+# Required only when metastore_exists = false.
+# Example: metastore_storage_root = "s3://<bucket>/<path>"
+# metastore_storage_root = null
 
+# -----------------------------------------------------------------------------
+# Trial-Safe Feature Flags
+# -----------------------------------------------------------------------------
+enable_audit_log_delivery      = false
+audit_log_delivery_exists      = false
+enable_example_cluster         = false
+enable_security_analysis_tool  = false
+
+# Optional compliance settings
+enable_compliance_security_profile = false
+compliance_standards               = ["Standard_A", "Standard_B"]
+
+# Optional Databricks settings
+deployment_name      = null
+databricks_gov_shard = null
+
+# -----------------------------------------------------------------------------
+# Create Workspace Later (optional)
+# -----------------------------------------------------------------------------
+# Switch to this when you are ready to have Terraform create a workspace.
+# workspace_source        = "create"
+# existing_workspace_host = null
+# existing_workspace_id   = null
+# network_configuration   = "managed"
+# uc_catalog_mode         = null
+
+# -----------------------------------------------------------------------------
+# Upgrade to Enterprise SRA (optional)
+# -----------------------------------------------------------------------------
+# pricing_tier         = "ENTERPRISE"
+# workspace_source     = "create"
+# network_configuration = "isolated"
+# uc_catalog_mode      = "isolated"
+# enable_audit_log_delivery = true
+
+# Isolated network inputs (required when network_configuration = "isolated")
+# vpc_cidr_range           = "10.0.0.0/18"
+# private_subnets_cidr     = ["10.0.0.0/22", "10.0.4.0/22", "10.0.8.0/22"]
+# privatelink_subnets_cidr = ["10.0.28.0/26", "10.0.28.64/26", "10.0.28.128/26"]
+# sg_egress_ports          = ["443", "2443", "5432", "6666", "8443", "8444", "8445", "8446", "8447", "8448", "8449", "8450", "8451"]
+
+# Custom network inputs (required when network_configuration = "custom")
 # custom_vpc_id             = ""
 # custom_private_subnet_ids = ["", ""]
 # custom_sg_id              = ""
 # custom_relay_vpce_id      = ""
 # custom_workspace_vpce_id  = ""
 
-# -----------------------------------------------------------------------------
-# Feature Flags
-# -----------------------------------------------------------------------------
-
-# If audit log delivery is already configured
-audit_log_delivery_exists = false
-
-# If a regional metastore exists
-metastore_exists = false
-
-# Enable the security analysis tool
-enable_security_analysis_tool = false
-
-# -----------------------------------------------------------------------------
-# Optional Configuration
-# -----------------------------------------------------------------------------
-
-# CMK Admin ARN (required for non-root account CMK usage)
+# Optional CMK admin ARN (used in Enterprise CMK workflows)
 # cmk_admin_arn = ""
-
-# Compliance Security Profile Setting
-# Standards: https://docs.databricks.com/aws/en/security/privacy/security-profile#compliance-security-profile-overview
-# NOTE: If you add HIPAA, it is your responsibility before you process PHI data to have a BAA agreement with Databricks.
-enable_compliance_security_profile = false
-
-# NOTE: This variable is necessary if and only if you do not set default compliance settings at the account level.
-# Avaiable compliance standards found here: https://pkg.go.dev/github.com/databricks/databricks-sdk-go/service/settings#ComplianceStandard
-compliance_standards = [ "Standard_A", "Standard_B" ]
-
-# Deployment name for the workspace (must be enabled by Databricks representative)
-deployment_name = null
-
-# If deploying to govcloud, is deployment "civilian" or "dod" shard
-databricks_gov_shard = null

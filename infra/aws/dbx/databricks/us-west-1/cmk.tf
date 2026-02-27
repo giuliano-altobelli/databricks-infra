@@ -5,6 +5,7 @@ locals {
 }
 
 resource "aws_kms_key" "workspace_storage" {
+  count       = local.enable_customer_managed_keys ? 1 : 0
   description = "KMS key for databricks workspace storage"
   policy = jsonencode({
     Version : "2012-10-17",
@@ -43,7 +44,7 @@ resource "aws_kms_key" "workspace_storage" {
         "Sid" : "Allow Databricks to use KMS key for EBS",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : aws_iam_role.cross_account_role.arn
+          "AWS" : aws_iam_role.cross_account_role[0].arn
         },
         "Action" : [
           "kms:Decrypt",
@@ -70,13 +71,15 @@ resource "aws_kms_key" "workspace_storage" {
 
 
 resource "aws_kms_alias" "workspace_storage_key_alias" {
+  count         = local.enable_customer_managed_keys ? 1 : 0
   name          = "alias/${var.resource_prefix}-workspace-storage-key"
-  target_key_id = aws_kms_key.workspace_storage.id
+  target_key_id = aws_kms_key.workspace_storage[0].id
 }
 
 # CMK for Managed Services
 
 resource "aws_kms_key" "managed_services" {
+  count       = local.enable_customer_managed_keys ? 1 : 0
   description = "KMS key for managed services"
   policy = jsonencode({ Version : "2012-10-17",
     "Id" : "key-policy-managed-services",
@@ -118,6 +121,7 @@ resource "aws_kms_key" "managed_services" {
 }
 
 resource "aws_kms_alias" "managed_services_key_alias" {
+  count         = local.enable_customer_managed_keys ? 1 : 0
   name          = "alias/${var.resource_prefix}-managed-services-key"
-  target_key_id = aws_kms_key.managed_services.key_id
+  target_key_id = aws_kms_key.managed_services[0].key_id
 }

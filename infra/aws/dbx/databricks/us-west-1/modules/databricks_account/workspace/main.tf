@@ -27,6 +27,8 @@ resource "databricks_mws_storage_configurations" "this" {
 
 # Backend REST VPC Endpoint Configuration
 resource "databricks_mws_vpc_endpoint" "backend_rest" {
+  count = var.enable_customer_managed_network ? 1 : 0
+
   account_id          = var.databricks_account_id
   aws_vpc_endpoint_id = var.backend_rest
   vpc_endpoint_name   = "${var.resource_prefix}-vpce-backend-${var.vpc_id}"
@@ -35,6 +37,8 @@ resource "databricks_mws_vpc_endpoint" "backend_rest" {
 
 # Backend Rest VPC Endpoint Configuration
 resource "databricks_mws_vpc_endpoint" "backend_relay" {
+  count = var.enable_customer_managed_network ? 1 : 0
+
   account_id          = var.databricks_account_id
   aws_vpc_endpoint_id = var.backend_relay
   vpc_endpoint_name   = "${var.resource_prefix}-vpce-relay-${var.vpc_id}"
@@ -43,19 +47,23 @@ resource "databricks_mws_vpc_endpoint" "backend_relay" {
 
 # Network Configuration
 resource "databricks_mws_networks" "this" {
+  count = var.enable_customer_managed_network ? 1 : 0
+
   account_id         = var.databricks_account_id
   network_name       = "${var.resource_prefix}-network"
   security_group_ids = var.security_group_ids
   subnet_ids         = var.subnet_ids
   vpc_id             = var.vpc_id
   vpc_endpoints {
-    dataplane_relay = [databricks_mws_vpc_endpoint.backend_relay.vpc_endpoint_id]
-    rest_api        = [databricks_mws_vpc_endpoint.backend_rest.vpc_endpoint_id]
+    dataplane_relay = [databricks_mws_vpc_endpoint.backend_relay[0].vpc_endpoint_id]
+    rest_api        = [databricks_mws_vpc_endpoint.backend_rest[0].vpc_endpoint_id]
   }
 }
 
 # Managed Services Key Configuration
 resource "databricks_mws_customer_managed_keys" "managed_services" {
+  count = var.enable_customer_managed_keys ? 1 : 0
+
   account_id = var.databricks_account_id
   aws_key_info {
     key_arn   = var.managed_services_key
@@ -66,6 +74,8 @@ resource "databricks_mws_customer_managed_keys" "managed_services" {
 
 # Workspace Storage Key Configuration
 resource "databricks_mws_customer_managed_keys" "workspace_storage" {
+  count = var.enable_customer_managed_keys ? 1 : 0
+
   account_id = var.databricks_account_id
   aws_key_info {
     key_arn   = var.workspace_storage_key
@@ -76,6 +86,8 @@ resource "databricks_mws_customer_managed_keys" "workspace_storage" {
 
 # Private Access Setting Configuration
 resource "databricks_mws_private_access_settings" "pas" {
+  count = var.enable_private_access_settings ? 1 : 0
+
   private_access_settings_name = "${var.resource_prefix}-PAS"
   region                       = var.region
   public_access_enabled        = true
@@ -90,23 +102,25 @@ resource "databricks_mws_workspaces" "workspace" {
   deployment_name                          = var.deployment_name
   credentials_id                           = databricks_mws_credentials.this.credentials_id
   storage_configuration_id                 = databricks_mws_storage_configurations.this.storage_configuration_id
-  network_id                               = databricks_mws_networks.this.network_id
-  private_access_settings_id               = databricks_mws_private_access_settings.pas.private_access_settings_id
-  managed_services_customer_managed_key_id = databricks_mws_customer_managed_keys.managed_services.customer_managed_key_id
-  storage_customer_managed_key_id          = databricks_mws_customer_managed_keys.workspace_storage.customer_managed_key_id
-  pricing_tier                             = "ENTERPRISE"
-
-  depends_on = [databricks_mws_networks.this]
+  network_id                               = var.enable_customer_managed_network ? databricks_mws_networks.this[0].network_id : null
+  private_access_settings_id               = var.enable_private_access_settings ? databricks_mws_private_access_settings.pas[0].private_access_settings_id : null
+  managed_services_customer_managed_key_id = var.enable_customer_managed_keys ? databricks_mws_customer_managed_keys.managed_services[0].customer_managed_key_id : null
+  storage_customer_managed_key_id          = var.enable_customer_managed_keys ? databricks_mws_customer_managed_keys.workspace_storage[0].customer_managed_key_id : null
+  pricing_tier                             = var.pricing_tier
 }
 
 # Attach the Network Policy
 resource "databricks_workspace_network_option" "workspace_assignment" {
+  count = var.enable_network_policy_attachment ? 1 : 0
+
   network_policy_id = var.network_policy_id
   workspace_id      = databricks_mws_workspaces.workspace.workspace_id
 }
 
 # Attach the Network Connectivity Configuration Object
 resource "databricks_mws_ncc_binding" "ncc_binding" {
+  count = var.enable_ncc_binding ? 1 : 0
+
   network_connectivity_config_id = var.network_connectivity_configuration_id
   workspace_id                   = databricks_mws_workspaces.workspace.workspace_id
 }
