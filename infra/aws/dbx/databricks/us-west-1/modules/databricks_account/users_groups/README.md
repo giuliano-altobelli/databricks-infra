@@ -9,6 +9,60 @@ This module requires two Databricks provider aliases to be passed by the caller:
 - `databricks.mws`: account-level provider (for users/groups/memberships/roles/workspace assignments)
 - `databricks.workspace`: workspace-level provider (for `databricks_entitlements`)
 
+## Group Role Distinction
+
+This module supports two common group patterns:
+
+- Plain group (no account-wide admin role): omit `roles` (or set `roles = []`).
+- Account admin group: set `roles = ["account_admin"]`.
+
+What changes between them:
+
+- `roles = ["account_admin"]` grants account-wide Databricks admin capability to group members.
+- `workspace_permissions` (for example `["ADMIN"]` or `["USER"]`) are scoped to `workspace_id` for this module instance.
+- Unity Catalog privileges are not managed by this module directly. They are granted separately (for example via `databricks_grant`) to the group's `display_name`.
+
+### Plain Group Example
+
+```hcl
+groups = {
+  platform_admins = {
+    display_name          = "Platform Admins"
+    workspace_permissions = ["ADMIN"]
+    entitlements = {
+      allow_cluster_create  = true
+      databricks_sql_access = true
+      workspace_access      = true
+    }
+  }
+}
+
+users = {
+  giuliano = {
+    user_name = "giulianoaltobelli@gmail.com"
+    groups    = ["platform_admins"]
+  }
+}
+```
+
+### Account Admin Group Example
+
+```hcl
+groups = {
+  platform_admins = {
+    display_name = "Platform Admins"
+    roles        = ["account_admin"]
+  }
+}
+
+users = {
+  giuliano = {
+    user_name = "giulianoaltobelli@gmail.com"
+    groups    = ["platform_admins"]
+  }
+}
+```
+
 ## Usage
 
 ```hcl
