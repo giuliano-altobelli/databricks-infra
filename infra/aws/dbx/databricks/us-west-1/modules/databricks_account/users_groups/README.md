@@ -22,6 +22,12 @@ What changes between them:
 - `workspace_permissions` (for example `["ADMIN"]` or `["USER"]`) are scoped to `workspace_id` for this module instance.
 - Unity Catalog privileges are not managed by this module directly. They are granted separately (for example via `databricks_grant`) to the group's `display_name`.
 
+## Existing User Handling (`force`)
+
+- `users[*].force` is optional.
+- Use `force = true` when Terraform must reconcile or adopt a pre-existing Databricks user in account identity management.
+- If omitted, provider default behavior is used.
+
 ### Plain Group Example
 
 ```hcl
@@ -40,6 +46,7 @@ groups = {
 users = {
   giuliano = {
     user_name = "giulianoaltobelli@gmail.com"
+    force     = true
     groups    = ["platform_admins"]
   }
 }
