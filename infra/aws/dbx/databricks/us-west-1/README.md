@@ -1,8 +1,43 @@
 # Security Reference Architectures (SRA) - Terraform Templates
 
+## Premium Trial Quickstart (Existing Workspace)
+
+This module now defaults to a Premium-trial-friendly workflow that targets an existing Databricks workspace and existing Unity Catalog objects.
+
+1. Copy `template.tfvars.example` to a working `*.tfvars` file.
+2. Fill in required values: `aws_account_id`, `databricks_account_id`, `admin_user`, `region`, `resource_prefix`, `existing_workspace_host`, and `existing_workspace_id`.
+3. Keep the trial defaults:
+   - `pricing_tier = "PREMIUM"`
+   - `workspace_source = "existing"`
+   - `network_configuration = "managed"`
+   - `uc_catalog_mode = "existing"`
+   - `metastore_exists = true` (recommended unless you set `metastore_storage_root` to create a metastore)
+4. Run Terraform from `infra/aws/dbx/databricks/us-west-1`.
+
+## Create Workspace Later
+
+When you are ready for Terraform-managed workspace creation, switch:
+
+- `workspace_source = "create"`
+- `network_configuration = "managed"` (Premium-safe default)
+- Leave `uc_catalog_mode = null` for inferred behavior, or set it explicitly.
+
+This enables workspace creation while still avoiding enterprise-only networking and CMK paths when `pricing_tier = "PREMIUM"`.
+
+## Upgrade to Enterprise SRA
+
+For full SRA behavior (customer-managed network controls, PrivateLink pathing, CMKs, restrictive AWS policies), use:
+
+- `pricing_tier = "ENTERPRISE"`
+- `workspace_source = "create"`
+- `network_configuration = "isolated"` (or `custom` if pre-existing networking is managed elsewhere)
+- `uc_catalog_mode = "isolated"`
+
+If you need the previous full-enterprise sample without modification, use `template.enterprise_sra.tfvars.example`.
+
 ## Read Before Deploying
 
-SRA is a purpose-built, simplified deployment pattern designed for highly secure and regulated customers.
+SRA is a purpose-built deployment pattern designed for highly secure and regulated customers. The default entrypoint is now Premium-trial-first, while enterprise SRA capabilities remain available through input flags.
 
 This architecture includes specific functionalities that may affect certain use cases, as outlined below.
 
@@ -33,9 +68,11 @@ Various `.tf` scripts contain direct links to the Databricks Terraform documenta
 
 ### Network Configuration
 
-Choose from two network configurations for your workspaces: **isolated** or **custom**.
+Choose from three network configurations for your workspaces: **managed**, **isolated**, or **custom**.
 
-- **Isolated (Default)**: Opting for 'isolated' prevents any traffic to the public internet, limiting traffic to AWS private endpoints for AWS services or the Databricks control plane.
+- **Managed (Default)**: Databricks-managed networking for trial and quickstart scenarios.
+
+- **Isolated**: Opting for 'isolated' prevents any traffic to the public internet, limiting traffic to AWS private endpoints for AWS services or the Databricks control plane.
    - **NOTE**: A Unity Catalog-only configuration is required for any clusters running without access to the public internet. Please see the official documentation [here](https://docs.databricks.com/aws/en/data-governance/unity-catalog/disable-hms).
 
 - **Custom**: Selecting 'custom' allows you to specify your own VPC ID, subnet IDs, security group IDs, and PrivateLink endpoint IDs. This mode is recommended when networking assets are created in different pipelines or pre-assigned by a centralized infrastructure team.
@@ -116,15 +153,15 @@ This section provides additional security recommendations to help maintain a str
 
 1. Clone this repository.
 2. Install [Terraform](https://developer.hashicorp.com/terraform/downloads).
-3. Decide which [operation mode](https://github.com/databricks/terraform-databricks-sra/tree/main/aws/tf#operation-mode) you'd like to use.
-4. Fill out `main.tf`.
-5. Fill out `template.tfvars.example` and rename the file to `template.tfvars` by removing `.example`.
+3. In `infra/aws/dbx/databricks/us-west-1`, copy `template.tfvars.example` to a new `*.tfvars` file and fill in your values.
+4. If needed, start from `template.enterprise_sra.tfvars.example` for a full-enterprise baseline.
+5. Decide your operation mode (`workspace_source` and `pricing_tier`) and Unity Catalog mode (`uc_catalog_mode`).
 6. Configure the [AWS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration) and [Databricks](https://registry.terraform.io/providers/databricks/databricks/latest/docs#authentication) provider authentication.
-7. Change directory into `tf`.
+7. Change directory into `infra/aws/dbx/databricks/us-west-1`.
 8. Run `terraform init`.
 9. Run `terraform validate`.
-10. From the `tf` directory, run `terraform plan -var-file ../example.tfvars`.
-11. Run `terraform apply -var-file ../example.tfvars`.
+10. Run `terraform plan -var-file <your-file>.tfvars`.
+11. Run `terraform apply -var-file <your-file>.tfvars`.
 
 ---
 

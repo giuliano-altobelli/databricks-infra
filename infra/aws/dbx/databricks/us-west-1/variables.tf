@@ -127,10 +127,68 @@ variable "deployment_name" {
   nullable    = true
 }
 
+variable "workspace_source" {
+  description = "Whether to target an existing workspace or create a new one."
+  type        = string
+  default     = "existing"
+
+  validation {
+    condition     = contains(["existing", "create"], var.workspace_source)
+    error_message = "Invalid workspace source. Allowed values are: existing, create."
+  }
+}
+
+variable "existing_workspace_host" {
+  description = "Workspace host URL for an existing workspace."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.workspace_source != "existing" || (var.existing_workspace_host != null && trimspace(var.existing_workspace_host) != "")
+    error_message = "existing_workspace_host is required when workspace_source is existing."
+  }
+}
+
+variable "existing_workspace_id" {
+  description = "Workspace ID for an existing workspace."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.workspace_source != "existing" || (var.existing_workspace_id != null && trimspace(var.existing_workspace_id) != "")
+    error_message = "existing_workspace_id is required when workspace_source is existing."
+  }
+}
+
+variable "pricing_tier" {
+  description = "Databricks pricing tier for workspace creation."
+  type        = string
+  default     = "PREMIUM"
+
+  validation {
+    condition     = contains(["PREMIUM", "ENTERPRISE"], var.pricing_tier)
+    error_message = "Invalid pricing tier. Allowed values are: PREMIUM, ENTERPRISE."
+  }
+}
+
 variable "enable_compliance_security_profile" {
   description = "Flag to enable the compliance security profile."
   type        = bool
   sensitive   = true
+  default     = false
+}
+
+variable "enable_audit_log_delivery" {
+  description = "Enable Databricks audit log delivery resources."
+  type        = bool
+  default     = false
+}
+
+variable "enable_example_cluster" {
+  description = "Enable creation of the example workspace cluster."
+  type        = bool
   default     = false
 }
 
@@ -146,15 +204,46 @@ variable "metastore_exists" {
   type        = bool
 }
 
+variable "metastore_storage_root" {
+  description = "Storage root location for creating a new Unity Catalog metastore."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.metastore_exists || (var.metastore_storage_root != null && trimspace(var.metastore_storage_root) != "")
+    error_message = "metastore_storage_root is required when metastore_exists is false."
+  }
+}
+
 variable "network_configuration" {
   description = "The type of network set-up for the workspace network configuration."
   type        = string
   nullable    = false
+  default     = "managed"
 
   validation {
-    condition     = contains(["custom", "isolated"], var.network_configuration)
-    error_message = "Invalid network configuration. Allowed values are: custom, isolated."
+    condition     = contains(["managed", "custom", "isolated"], var.network_configuration)
+    error_message = "Invalid network configuration. Allowed values are: managed, custom, isolated."
   }
+}
+
+variable "uc_catalog_mode" {
+  description = "Unity Catalog mode. Null means mode is inferred from pricing tier and workspace source."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.uc_catalog_mode == null || contains(["existing", "isolated"], var.uc_catalog_mode)
+    error_message = "Invalid uc_catalog_mode. Allowed values are: existing, isolated, or null."
+  }
+}
+
+variable "uc_existing_catalog_name" {
+  description = "Existing Unity Catalog name to use when uc_catalog_mode is existing."
+  type        = string
+  default     = "main"
 }
 
 variable "private_subnets_cidr" {

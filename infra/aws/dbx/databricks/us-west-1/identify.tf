@@ -64,23 +64,23 @@ module "users_groups" {
     databricks.workspace = databricks.created_workspace
   }
 
-  workspace_id = module.databricks_mws_workspace.workspace_id
+  workspace_id = local.workspace_id
   groups       = local.identity_groups
   users        = local.identity_users
 
-  depends_on = [module.databricks_mws_workspace]
+  depends_on = [module.unity_catalog_metastore_assignment]
 }
 
 resource "databricks_grant" "unity_catalog_group_catalog_grants" {
   provider = databricks.created_workspace
   for_each = local.unity_catalog_group_catalog_privileges
 
-  catalog    = module.unity_catalog_catalog_creation.catalog_name
+  catalog    = local.catalog_name
   principal  = local.identity_groups[each.key].display_name
   privileges = sort(each.value)
 
   depends_on = [
     module.users_groups,
-    module.unity_catalog_catalog_creation,
+    module.unity_catalog_metastore_assignment,
   ]
 }
