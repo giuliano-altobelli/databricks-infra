@@ -73,6 +73,7 @@ variable "users" {
     user_name             = string
     display_name          = optional(string)
     active                = optional(bool)
+    force                 = optional(bool)
     groups                = optional(set(string), [])
     roles                 = optional(set(string), [])
     workspace_permissions = optional(set(string), [])
