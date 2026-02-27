@@ -6,32 +6,22 @@ locals {
   # Define account-level groups keyed by stable IDs.
   # Keep this map empty when no additional groups are needed.
   identity_groups = {
-    # platform_admins = {
-    #   display_name          = "Platform Admins"
-    #   roles                 = ["account_admin"]
-    #   workspace_permissions = ["ADMIN"]
-    #   entitlements = {
-    #     allow_cluster_create  = true
-    #     databricks_sql_access = true
-    #     workspace_access      = true
-    #   }
-    # }
+    platform_admins = {
+      display_name          = "Platform Admins"
+      roles                 = ["account_admin"]
+      workspace_permissions = ["ADMIN"]
+    }
   }
 
   # Define account-level users keyed by stable IDs.
   # NOTE: `var.admin_user` workspace assignment is currently managed by
   # `module.user_assignment` in `main.tf`.
   identity_users = {
-    # jane_doe = {
-    #   user_name              = "jane.doe@example.com"
-    #   groups                 = ["platform_admins"]
-    #   roles                  = ["account_admin"]
-    #   workspace_permissions  = ["ADMIN"]
-    #   entitlements = {
-    #     databricks_sql_access = true
-    #     workspace_access      = true
-    #   }
-    # }
+    giuliano = {
+      user_name = "giulianoaltobelli@gmail.com"
+      force     = true
+      groups    = ["platform_admins"]
+    }
   }
 
   # FUTURE NOTE:
@@ -51,7 +41,7 @@ locals {
   # Key must match a key in `local.identity_groups`.
   # Value is the list of privileges for that group on the workspace catalog.
   unity_catalog_group_catalog_privileges = {
-    # platform_admins = ["ALL_PRIVILEGES"]
+    platform_admins = ["ALL_PRIVILEGES"]
     # analytics_users = ["USE_CATALOG", "USE_SCHEMA", "SELECT"]
   }
 }
