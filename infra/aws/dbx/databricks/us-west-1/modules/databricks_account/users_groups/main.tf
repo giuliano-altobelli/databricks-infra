@@ -76,6 +76,7 @@ resource "databricks_user" "users" {
   user_name    = each.value.user_name
   display_name = each.value.display_name
   active       = each.value.active
+  force        = each.value.force
 }
 
 resource "databricks_user" "users_protected" {
@@ -85,6 +86,7 @@ resource "databricks_user" "users_protected" {
   user_name    = each.value.user_name
   display_name = each.value.display_name
   active       = each.value.active
+  force        = each.value.force
 
   lifecycle {
     prevent_destroy = true
