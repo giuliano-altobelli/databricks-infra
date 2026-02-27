@@ -33,11 +33,11 @@ variable "groups" {
     roles                 = optional(set(string), [])
     workspace_permissions = optional(set(string), [])
     entitlements = optional(object({
-      allow_cluster_create       = optional(bool, false)
-      allow_instance_pool_create = optional(bool, false)
-      databricks_sql_access      = optional(bool, false)
-      workspace_access           = optional(bool, false)
-      workspace_consume          = optional(bool, false)
+      allow_cluster_create       = optional(bool)
+      allow_instance_pool_create = optional(bool)
+      databricks_sql_access      = optional(bool)
+      workspace_access           = optional(bool)
+      workspace_consume          = optional(bool)
     }))
   }))
   default = {}
@@ -56,10 +56,10 @@ variable "groups" {
     condition = alltrue([
       for group in values(var.groups) :
       group.entitlements == null ? true : !(
-        try(group.entitlements.workspace_consume, false) &&
+        coalesce(try(group.entitlements.workspace_consume, null), false) &&
         (
-          try(group.entitlements.workspace_access, false) ||
-          try(group.entitlements.databricks_sql_access, false)
+          coalesce(try(group.entitlements.workspace_access, null), false) ||
+          coalesce(try(group.entitlements.databricks_sql_access, null), false)
         )
       )
     ])
@@ -78,11 +78,11 @@ variable "users" {
     roles                 = optional(set(string), [])
     workspace_permissions = optional(set(string), [])
     entitlements = optional(object({
-      allow_cluster_create       = optional(bool, false)
-      allow_instance_pool_create = optional(bool, false)
-      databricks_sql_access      = optional(bool, false)
-      workspace_access           = optional(bool, false)
-      workspace_consume          = optional(bool, false)
+      allow_cluster_create       = optional(bool)
+      allow_instance_pool_create = optional(bool)
+      databricks_sql_access      = optional(bool)
+      workspace_access           = optional(bool)
+      workspace_consume          = optional(bool)
     }))
   }))
   default = {}
@@ -101,10 +101,10 @@ variable "users" {
     condition = alltrue([
       for user in values(var.users) :
       user.entitlements == null ? true : !(
-        try(user.entitlements.workspace_consume, false) &&
+        coalesce(try(user.entitlements.workspace_consume, null), false) &&
         (
-          try(user.entitlements.workspace_access, false) ||
-          try(user.entitlements.databricks_sql_access, false)
+          coalesce(try(user.entitlements.workspace_access, null), false) ||
+          coalesce(try(user.entitlements.databricks_sql_access, null), false)
         )
       )
     ])

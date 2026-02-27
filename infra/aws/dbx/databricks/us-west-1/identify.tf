@@ -10,6 +10,11 @@ locals {
       display_name          = "Platform Admins"
       roles                 = ["account_admin"]
       workspace_permissions = ["ADMIN"]
+      entitlements = {
+        allow_cluster_create  = true
+        databricks_sql_access = true
+        workspace_access      = true
+      }
     }
   }
 
@@ -21,6 +26,11 @@ locals {
       user_name = "giulianoaltobelli@gmail.com"
       force     = true
       groups    = ["platform_admins"]
+      entitlements = {
+        allow_cluster_create  = true
+        databricks_sql_access = true
+        workspace_access      = true
+      }
     }
   }
 

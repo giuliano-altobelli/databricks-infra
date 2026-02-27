@@ -28,6 +28,12 @@ What changes between them:
 - Use `force = true` when Terraform must reconcile or adopt a pre-existing Databricks user in account identity management.
 - If omitted, provider default behavior is used.
 
+## Entitlements Behavior
+
+- Entitlement fields are optional and only sent when explicitly set.
+- For `workspace_access` and `databricks_sql_access`, omit `workspace_consume`.
+- `workspace_consume` is only valid when both `workspace_access` and `databricks_sql_access` are not set to `true`.
+
 ### Plain Group Example
 
 ```hcl
