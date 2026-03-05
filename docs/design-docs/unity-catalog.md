@@ -89,7 +89,7 @@ Notes:
 Workspace entitlements and compute policies should reinforce Unity Catalog boundaries:
 
 - Interactive compute should not be able to write into governed `prod_*` production layer schemas.
-- Only the CI bot and controlled pipelines should write into governed schemas.
+- Only dedicated CI service principals and controlled pipelines should write into governed schemas.
 
 This document does not prescribe the exact cluster policies; it defines the UC boundaries they must support.
 
@@ -98,9 +98,10 @@ This document does not prescribe the exact cluster policies; it defines the UC b
 Principles:
 
 - Unity Catalog grants are the primary enforcement mechanism for data access.
-- Humans write in `personal.<user_schema>`.
-- The **CI bot service principal** is the only writer to `prod_*.<domain>.uat`.
-- Production layer schemas (`raw/base/staging/final`) are written only by controlled pipelines/admins (not ad-hoc humans).
+- Humans write in `personal.<user_key>`.
+- A dedicated **UAT promotion** service principal is the only writer to `prod_*.<domain>.uat`.
+- A dedicated **release** service principal publishes into `prod_*.<domain>.(raw|base|staging|final)`.
+- Production layer schemas (`raw/base/staging/final`) are written only by controlled release pipelines/admins (not ad-hoc humans).
 
 #### Domain readers
 
@@ -112,15 +113,22 @@ For each domain catalog `prod_<source>_<business_area>`:
   - Schema: `USE_SCHEMA`
   - Data: `SELECT` (and optionally `READ_METADATA`)
 
-#### CI bot (service principal)
+#### UAT promotion service principal
 
-For each domain catalog:
+One service principal used by CI for PR-driven promotion into domain `uat` schemas.
 
-- CI bot can write to `uat` only.
-- CI bot has no write privileges to `raw/base/staging/final`.
-- Typical privileges (on `uat` schema):
+- Has read/write access to all `prod_<source>_<business_area>.uat` schemas.
+- Has **no access** (read or write) to `prod_<source>_<business_area>.(raw|base|staging|final)`.
+- Typical privileges (on each `uat` schema):
   - `USE_CATALOG`, `USE_SCHEMA`
   - Table/view write privileges as needed by the artifact type (e.g. `CREATE_TABLE`, `MODIFY`, or `ALL_PRIVILEGES` scoped to the `uat` schema)
+
+#### Release service principal
+
+One service principal used by CI for publishing into governed production layer schemas.
+
+- Has full access to all `prod_<source>_<business_area>.(raw|base|staging|final)` schemas.
+- Publishing is executed via controlled pipelines (not ad-hoc human interactive compute).
 
 #### Personal schemas
 
@@ -146,7 +154,8 @@ Planned declarative inputs:
 
 - Domain catalog matrix: `(source, business_area)` list
 - Domain read principals per domain
-- CI bot service principal identifier (for `uat` write grants)
+- UAT promotion service principal identifier (for `uat` write grants)
+- Release service principal identifier (for production layer write grants)
 - Personal schema user keys: derived from `keys(local.identity_users)`
 
 Planned resources:

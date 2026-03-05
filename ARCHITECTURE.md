@@ -20,7 +20,8 @@ Examples:
 ### Access model (intent)
 
 - Humans write only in `personal.<user_key>`.
-- The CI bot service principal is the **only writer** to `prod_<source>_<business_area>.uat` (future implementation).
+- The **UAT promotion** service principal has read/write access to all `prod_<source>_<business_area>.uat` schemas, but **no access** to `prod_<source>_<business_area>.(raw|base|staging|final)`.
+- The **release** service principal has full access to all `prod_<source>_<business_area>.(raw|base|staging|final)` schemas.
 - Domain readers can read both:
   - `prod_<source>_<business_area>.(raw|base|staging|final)`
   - `prod_<source>_<business_area>.uat`
@@ -34,15 +35,17 @@ Detailed design: `docs/design-docs/unity-catalog.md`
 flowchart LR
   Dev[Developer] -->|Build / iterate| Personal[personal.<user_key>]
   Dev -->|Open PR| PR[Pull Request]
-  PR -->|Approved + "databricks deploy"| Bot[CI bot (service principal)]
-  Bot -->|Promote artifacts| UAT[prod_<source>_<business_area>.uat]
+  PR -->|CI: promote to UAT| UatBot[UAT promotion SP]
+  UatBot -->|Promote artifacts| UAT[prod_<source>_<business_area>.uat]
   Readers[Domain readers] -->|Validate / consume| UAT
-  Pipelines[Controlled pipelines] -->|Publish| Prod[prod_<source>_<business_area>.(raw|base|staging|final)]
+  PR -->|Approved + "databricks deploy"| ReleaseBot[Release SP]
+  ReleaseBot -->|Publish| Prod[prod_<source>_<business_area>.(raw|base|staging|final)]
 ```
 
 Notes:
 
-- The PR-triggered promotion is a future implementation detail; this diagram captures the intended workflow boundaries.
+- On PR submission, CI automatically promotes shareable artifacts into `prod_<source>_<business_area>.uat` using the **UAT promotion** service principal.
+- After approval, a `"databricks deploy"` comment triggers publish into the governed production layer schemas using the **release** service principal.
 - In the single-workspace phase, strict Unity Catalog grants and workspace compute controls are required to prevent accidental writes into governed production layer schemas.
 
 ## Future: multi-workspace (shared metastore)
