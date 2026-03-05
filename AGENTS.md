@@ -28,3 +28,13 @@
 - Use this command pattern for all plan/apply runs:
   - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 <plan|apply> -var-file=<scenario-file>`
 - If the request is to avoid enterprise/SRA deployment, use scenario 1 or 2 only and do not apply scenario 3 plans.
+
+## Obsidian CLI (Second Brain Vault)
+
+- Vault name: `second brain`
+- Vault path: `/Users/giulianoaltobelli/workbench/git-projects/second brain`
+- Always pass `vault="second brain"` (quoted) when using the `obsidian` CLI to avoid targeting the wrong vault.
+- Parameters use `=` (e.g. `name="My Note"`). Quote values with spaces. Use `\n` for newlines in `content`.
+- Use `path="folder/note.md"` for an exact path, or `file="Note Name"` for a wikilink-style lookup (name only).
+- Use `silent` for automation runs to avoid opening files in the UI.
+- In this Codex environment, `obsidian` commands may fail inside the sandbox; rerun them outside the sandbox (escalated) if needed.
