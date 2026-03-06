@@ -9,7 +9,7 @@ This repository currently targets a **single Databricks workspace**. Unity Catal
 - **Governed domain catalogs:** `prod_<source>_<business_area>`
   - Schemas: `raw`, `base`, `staging`, `final`, plus `uat`
 - **Personal development catalog:** `personal`
-  - Schemas: `personal.<user_key>` for each user key in Terraform `local.identity_users` (pre-provisioned)
+  - Schemas: `personal.<user_key>` for each approved user key provisioned into Databricks through Okta SCIM
 
 Examples:
 
@@ -29,21 +29,39 @@ Examples:
 
 Detailed design: `docs/design-docs/unity-catalog.md`
 
+## Identity provisioning
+
+User lifecycle is assumed to be managed outside Terraform through Okta SCIM.
+
+```mermaid
+flowchart LR
+  Okta[Okta group approval] --> Scim[SCIM provisions user in Databricks]
+  Scim --> AccountGroup[Added to okta-databricks-users at account level]
+  AccountGroup --> WorkspaceGroup[Added to okta-databricks-users at workspace level]
+  WorkspaceGroup --> OptionalGroup[Optional: additional Databricks group assignment via identify.tf]
+```
+
+- Approval through the relevant Okta access path provisions the user into Databricks.
+- Approved users are automatically added to `okta-databricks-users` at both the Databricks account and workspace levels.
+- `infra/aws/dbx/databricks/us-west-1/identify.tf` is no longer used to create users. It is used only to assign already provisioned users to additional Databricks groups when requested.
+- Automatic membership in `okta-databricks-users` does not, by itself, change Unity Catalog privileges. Unity Catalog access continues to be managed separately through Terraform group definitions and grants.
+
 ## Developer experience flow
 
 ```mermaid
 flowchart LR
-  Dev[Developer] -->|Build / iterate| Personal[personal.<user_key>]
+  Dev[Developer] -->|Build / iterate| Personal[personal user schema]
   Dev -->|Open PR| PR[Pull Request]
   PR -->|CI: promote to UAT| UatBot[UAT promotion SP]
-  UatBot -->|Promote artifacts| UAT[prod_<source>_<business_area>.uat]
+  UatBot -->|Promote artifacts| UAT[prod domain UAT schema]
   Readers[Domain readers] -->|Validate / consume| UAT
-  PR -->|Approved + "databricks deploy"| ReleaseBot[Release SP]
-  ReleaseBot -->|Publish| Prod[prod_<source>_<business_area>.(raw|base|staging|final)]
+  PR -->|Approved + databricks deploy comment| ReleaseBot[Release SP]
+  ReleaseBot -->|Publish| Prod[prod domain raw, base, staging, and final schemas]
 ```
 
 Notes:
 
+- Before the workflow below starts, the developer must already be provisioned through Okta SCIM and present in `okta-databricks-users` at the account and workspace levels.
 - On PR submission, CI automatically promotes shareable artifacts into `prod_<source>_<business_area>.uat` using the **UAT promotion** service principal.
 - After approval, a `"databricks deploy"` comment triggers publish into the governed production layer schemas using the **release** service principal.
 - In the single-workspace phase, strict Unity Catalog grants and workspace compute controls are required to prevent accidental writes into governed production layer schemas.
