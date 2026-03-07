@@ -2,7 +2,7 @@
 
 ## Premium Trial Quickstart (Existing Workspace)
 
-This module now defaults to a Premium-trial-friendly workflow that targets an existing Databricks workspace and existing Unity Catalog objects.
+This module now defaults to a Premium-trial-friendly workflow that targets an existing Databricks workspace and existing Unity Catalog metastore.
 
 1. Copy `template.tfvars.example` to a working `*.tfvars` file.
 2. Fill in required values: `aws_account_id`, `databricks_account_id`, `admin_user`, `region`, `resource_prefix`, `existing_workspace_host`, and `existing_workspace_id`.
@@ -20,8 +20,17 @@ This rollout is verified only against the existing workspace and existing metast
 
 - Human users must already exist through Okta SCIM before Terraform runs.
 - `identify.tf` manages only additional Databricks groups, memberships, workspace assignments, and entitlements for those existing users.
+- Existing Unity Catalog objects are not treated as the Terraform-managed target state during this rollout.
 - Phase 1 excludes Unity Catalog grants from `identify.tf`.
 - Phase 2 adds fresh Terraform-managed catalogs and schemas later rather than reusing existing Unity Catalog objects as the target state.
+
+If you previously applied the older existing-catalog flow, remove the legacy Unity Catalog resources from Terraform state before re-verifying Phase 1 so Terraform stops managing them without deleting the live workspace settings:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 state rm \
+  'databricks_default_namespace_setting.existing_catalog_default_namespace[0]' \
+  'databricks_grant.existing_catalog_admin_grant[0]'
+```
 
 ## Create Workspace Later
 
