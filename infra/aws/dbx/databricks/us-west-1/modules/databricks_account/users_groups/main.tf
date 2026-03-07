@@ -69,28 +69,11 @@ locals {
   }
 }
 
-resource "databricks_user" "users" {
+data "databricks_user" "users" {
   provider = databricks.mws
-  for_each = var.prevent_destroy ? {} : local.enabled_users
+  for_each = local.enabled_users
 
-  user_name    = each.value.user_name
-  display_name = each.value.display_name
-  active       = each.value.active
-  force        = each.value.force
-}
-
-resource "databricks_user" "users_protected" {
-  provider = databricks.mws
-  for_each = var.prevent_destroy ? local.enabled_users : {}
-
-  user_name    = each.value.user_name
-  display_name = each.value.display_name
-  active       = each.value.active
-  force        = each.value.force
-
-  lifecycle {
-    prevent_destroy = true
-  }
+  user_name = each.value.user_name
 }
 
 resource "databricks_group" "groups" {
@@ -112,10 +95,7 @@ resource "databricks_group" "groups_protected" {
 }
 
 locals {
-  user_id_map = merge(
-    { for user_key, user in databricks_user.users : user_key => user.id },
-    { for user_key, user in databricks_user.users_protected : user_key => user.id }
-  )
+  user_id_map = { for user_key, user in data.databricks_user.users : user_key => user.id }
   group_id_map = merge(
     { for group_key, group in databricks_group.groups : group_key => group.id },
     { for group_key, group in databricks_group.groups_protected : group_key => group.id }

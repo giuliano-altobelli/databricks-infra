@@ -1,5 +1,5 @@
 output "user_ids" {
-  description = "Map of user keys to Databricks user IDs."
+  description = "Map of user keys to looked-up Databricks user IDs."
   value       = local.user_id_map
 
   precondition {

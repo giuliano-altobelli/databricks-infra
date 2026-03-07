@@ -15,7 +15,7 @@ variable "workspace_id" {
 }
 
 variable "prevent_destroy" {
-  description = "Whether to set lifecycle.prevent_destroy on databricks_user and databricks_group resources."
+  description = "Whether to set lifecycle.prevent_destroy on databricks_group resources."
   type        = bool
   default     = false
 }
@@ -68,12 +68,9 @@ variable "groups" {
 }
 
 variable "users" {
-  description = "Account-level users to create and manage."
+  description = "Existing account-level users to look up and manage assignments for."
   type = map(object({
     user_name             = string
-    display_name          = optional(string)
-    active                = optional(bool)
-    force                 = optional(bool)
     groups                = optional(set(string), [])
     roles                 = optional(set(string), [])
     workspace_permissions = optional(set(string), [])

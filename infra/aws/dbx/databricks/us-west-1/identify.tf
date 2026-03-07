@@ -3,8 +3,7 @@
 # =============================================================================
 
 locals {
-  # Define account-level groups keyed by stable IDs.
-  # Keep this map empty when no additional groups are needed.
+  # Define additional account-level groups keyed by stable IDs.
   identity_groups = {
     platform_admins = {
       display_name          = "Platform Admins"
@@ -18,13 +17,13 @@ locals {
     }
   }
 
-  # Define account-level users keyed by stable IDs.
-  # NOTE: `var.admin_user` workspace assignment is currently managed by
-  # `module.user_assignment` in `main.tf`.
+  # Existing human users must already be provisioned by Okta SCIM before
+  # Terraform runs. Baseline workspace access continues to flow from Okta SCIM
+  # and `okta-databricks-users`, while `module.user_assignment` in `main.tf`
+  # preserves bootstrap admin access during this rollout.
   identity_users = {
     giuliano = {
       user_name = "giulianoaltobelli@gmail.com"
-      force     = true
       groups    = ["platform_admins"]
       entitlements = {
         allow_cluster_create  = true
@@ -47,13 +46,7 @@ locals {
   #   if lower(trimspace(user.user_name)) != local.bootstrap_admin_user
   # }
 
-  # Optional Unity Catalog catalog grants for groups.
-  # Key must match a key in `local.identity_groups`.
-  # Value is the list of privileges for that group on the workspace catalog.
-  unity_catalog_group_catalog_privileges = {
-    platform_admins = ["ALL_PRIVILEGES"]
-    # analytics_users = ["USE_CATALOG", "USE_SCHEMA", "SELECT"]
-  }
+  # Unity Catalog grants move to phase 2 and phase 3 of this rollout.
 }
 
 module "users_groups" {
@@ -69,18 +62,4 @@ module "users_groups" {
   users        = local.identity_users
 
   depends_on = [module.unity_catalog_metastore_assignment]
-}
-
-resource "databricks_grant" "unity_catalog_group_catalog_grants" {
-  provider = databricks.created_workspace
-  for_each = local.unity_catalog_group_catalog_privileges
-
-  catalog    = local.catalog_name
-  principal  = local.identity_groups[each.key].display_name
-  privileges = sort(each.value)
-
-  depends_on = [
-    module.users_groups,
-    module.unity_catalog_metastore_assignment,
-  ]
 }

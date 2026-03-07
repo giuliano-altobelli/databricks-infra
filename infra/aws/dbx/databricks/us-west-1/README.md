@@ -14,6 +14,15 @@ This module now defaults to a Premium-trial-friendly workflow that targets an ex
    - `metastore_exists = true` (recommended unless you set `metastore_storage_root` to create a metastore)
 4. Run Terraform from `infra/aws/dbx/databricks/us-west-1`.
 
+## Existing Workspace Identity Rollout
+
+This rollout is verified only against the existing workspace and existing metastore path in `scenario1.premium-existing.tfvars`.
+
+- Human users must already exist through Okta SCIM before Terraform runs.
+- `identify.tf` manages only additional Databricks groups, memberships, workspace assignments, and entitlements for those existing users.
+- Phase 1 excludes Unity Catalog grants from `identify.tf`.
+- Phase 2 adds fresh Terraform-managed catalogs and schemas later rather than reusing existing Unity Catalog objects as the target state.
+
 ## Create Workspace Later
 
 When you are ready for Terraform-managed workspace creation, switch:

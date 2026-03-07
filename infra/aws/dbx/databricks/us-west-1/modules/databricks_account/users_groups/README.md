@@ -1,12 +1,12 @@
 # databricks_account/users_groups
 
-Manages account-level users, groups, memberships, principal roles, workspace permission assignments, and workspace entitlements for a single target workspace.
+Manages existing account-level users, account-level groups, memberships, principal roles, workspace permission assignments, and workspace entitlements for a single target workspace.
 
 ## Provider Contract
 
 This module requires two Databricks provider aliases to be passed by the caller:
 
-- `databricks.mws`: account-level provider (for users/groups/memberships/roles/workspace assignments)
+- `databricks.mws`: account-level provider (for user lookups/groups/memberships/roles/workspace assignments)
 - `databricks.workspace`: workspace-level provider (for `databricks_entitlements`)
 
 ## Group Role Distinction
@@ -22,11 +22,11 @@ What changes between them:
 - `workspace_permissions` (for example `["ADMIN"]` or `["USER"]`) are scoped to `workspace_id` for this module instance.
 - Unity Catalog privileges are not managed by this module directly. They are granted separately (for example via `databricks_grant`) to the group's `display_name`.
 
-## Existing User Handling (`force`)
+## Existing User Handling
 
-- `users[*].force` is optional.
-- Use `force = true` when Terraform must reconcile or adopt a pre-existing Databricks user in account identity management.
-- If omitted, provider default behavior is used.
+- `users[*]` is lookup-only input.
+- Human users must already exist in Databricks account identity management before this module runs.
+- Terraform manages group membership, roles, workspace assignments, and entitlements for the looked-up users.
 
 ## Entitlements Behavior
 
@@ -52,7 +52,6 @@ groups = {
 users = {
   giuliano = {
     user_name = "giulianoaltobelli@gmail.com"
-    force     = true
     groups    = ["platform_admins"]
   }
 }
@@ -113,7 +112,6 @@ module "users_groups" {
   users = {
     alice = {
       user_name              = "alice@example.com"
-      display_name           = "Alice Example"
       groups                 = ["data_platform_admins"]
       roles                  = ["account_admin"]
       workspace_permissions  = ["ADMIN"]
