@@ -9,7 +9,8 @@ This repository currently targets a **single Databricks workspace**. Unity Catal
 - **Governed domain catalogs:** `prod_<source>_<business_area>`
   - Schemas: `raw`, `base`, `staging`, `final`, plus `uat`
 - **Personal development catalog:** `personal`
-  - Schemas: `personal.<user_key>` for each approved user key provisioned into Databricks through Okta SCIM
+  - Schemas: `personal.<user_key>` for each user present in the workspace-level `okta-databricks-users` group
+  - `<user_key>` is derived from the user's normalized email local part (example: `jane.doe@company.com` -> `jane_doe`)
 
 Examples:
 
@@ -44,6 +45,7 @@ flowchart LR
 - Approval through the relevant Okta access path provisions the user into Databricks.
 - Approved users are automatically added to `okta-databricks-users` at both the Databricks account and workspace levels.
 - `infra/aws/dbx/databricks/us-west-1/identify.tf` is no longer used to create users. It is used only to assign already provisioned users to additional Databricks groups when requested.
+- The `personal` catalog is expected to create one schema per user based on live membership in the workspace-level `okta-databricks-users` group.
 - Automatic membership in `okta-databricks-users` does not, by itself, change Unity Catalog privileges. Unity Catalog access continues to be managed separately through Terraform group definitions and grants.
 
 ## Developer experience flow
