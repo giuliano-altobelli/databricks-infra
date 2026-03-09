@@ -1,5 +1,13 @@
 # Repository Agent Rules
 
+- For spec-driven agentic engineering in this repo, use this document as the persistent repo instruction layer.
+- Treat `ARCHITECTURE.md` as the global architecture spec: repo-wide constraints, invariants, access model, and intended end-state.
+- Treat module or feature `SPEC.md` files as the local implementation contract: scope, interfaces, provider context, constraints, and validation.
+- For any non-trivial change, do not implement from a loose prompt alone. First identify the governing `SPEC.md`; if none exists, create a scoped spec or written plan before changing Terraform or behavior.
+- If a local `SPEC.md` conflicts with `ARCHITECTURE.md`, stop and resolve the design conflict explicitly before implementation.
+- Treat `README.md` files as supporting usage and operator context, not the primary spec, unless the task explicitly says otherwise.
+- Before claiming completion, verify the change against the applicable `SPEC.md`, `ARCHITECTURE.md`, and repo validation steps.
+
 - For any Databricks identity or access-control change, always ask scope before implementation:
   - Unity Catalog
   - Account-level
