@@ -37,14 +37,15 @@ User lifecycle is assumed to be managed outside Terraform through Okta SCIM.
 ```mermaid
 flowchart LR
   Okta[Okta group approval] --> Scim[SCIM provisions user in Databricks]
-  Scim --> AccountGroup[Added to okta-databricks-users at account level]
-  AccountGroup --> WorkspaceGroup[Added to okta-databricks-users at workspace level]
-  WorkspaceGroup --> OptionalGroup[Optional: additional Databricks group assignment via identify.tf]
+  Scim --> AccountGroup[Add user to okta-databricks-users at account level]
+  AccountGroup --> WorkspaceGroup[Add user to okta-databricks-users at workspace level]
+  WorkspaceGroup --> OptionalGroup[identify.tf adds optional Databricks groups and assignments]
 ```
 
 - Approval through the relevant Okta access path provisions the user into Databricks.
 - Approved users are automatically added to `okta-databricks-users` at both the Databricks account and workspace levels.
-- `infra/aws/dbx/databricks/us-west-1/identify.tf` is no longer used to create users. It is used only to assign already provisioned users to additional Databricks groups when requested.
+- `infra/aws/dbx/databricks/us-west-1/identify.tf` does not create users. It assigns already provisioned users to additional Terraform-managed Databricks groups when requested.
+- Those additional Databricks groups, along with the already provisioned users referenced in `identify.tf`, can carry account roles, workspace permission assignments, and workspace entitlements managed through Terraform.
 - The `personal` catalog is expected to create one schema per user based on live membership in the workspace-level `okta-databricks-users` group.
 - Automatic membership in `okta-databricks-users` does not, by itself, change Unity Catalog privileges. Unity Catalog access continues to be managed separately through Terraform group definitions and grants.
 
