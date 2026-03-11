@@ -30,7 +30,7 @@ locals {
       permissions = [
         {
           principal_type   = "group"
-          principal_name   = "Platform Admins"
+          principal_name   = local.identity_groups.platform_admins.display_name
           permission_level = "CAN_USE"
         }
         # Future principal-user grant placeholder.
