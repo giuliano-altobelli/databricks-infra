@@ -18,7 +18,26 @@ module "cluster_policy" {
     bundle_dlt_job = {
       name        = "Bundle DLT Job Policy"
       description = "Used by Databricks Asset Bundles for DLT job clusters."
-      definition  = jsonencode({})
+      definition = jsonencode({
+        cluster_type = {
+          type   = "fixed"
+          value  = "dlt"
+          hidden = true
+        }
+        num_workers = {
+          type         = "unlimited"
+          defaultValue = 3
+          isOptional   = true
+        }
+        node_type_id = {
+          type       = "unlimited"
+          isOptional = true
+        }
+        spark_version = {
+          type   = "unlimited"
+          hidden = true
+        }
+      })
       permissions = [
         {
           principal_type   = "group"
