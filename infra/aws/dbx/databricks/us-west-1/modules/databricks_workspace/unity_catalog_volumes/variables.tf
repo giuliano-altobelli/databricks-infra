@@ -14,7 +14,6 @@ variable "volumes" {
     comment          = optional(string)
     owner            = optional(string)
     storage_location = optional(string)
-    force_destroy    = optional(bool, false)
     grants = optional(list(object({
       principal  = string
       privileges = list(string)
@@ -42,7 +41,9 @@ variable "volumes" {
   validation {
     condition = !var.enabled || alltrue([
       for volume in values(var.volumes) :
-      volume.volume_type != "EXTERNAL" || trimspace(coalesce(try(volume.storage_location, null), "")) != ""
+      volume.volume_type != "EXTERNAL" || (
+        try(volume.storage_location, null) == null ? false : trimspace(volume.storage_location) != ""
+      )
     ])
     error_message = "EXTERNAL volumes must declare a non-empty storage_location."
   }
@@ -50,7 +51,9 @@ variable "volumes" {
   validation {
     condition = !var.enabled || alltrue([
       for volume in values(var.volumes) :
-      volume.volume_type != "MANAGED" || trimspace(coalesce(try(volume.storage_location, null), "")) == ""
+      volume.volume_type != "MANAGED" || (
+        try(volume.storage_location, null) == null ? true : trimspace(volume.storage_location) == ""
+      )
     ])
     error_message = "MANAGED volumes must not declare storage_location."
   }

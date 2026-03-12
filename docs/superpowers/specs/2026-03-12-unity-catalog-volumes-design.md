@@ -83,7 +83,6 @@ Each volume object includes:
 - `comment` (`optional(string)`)
 - `owner` (`optional(string)`)
 - `storage_location` (`optional(string)`)
-- `force_destroy` (`optional(bool, false)`)
 - `grants` (`optional(list(object))`) where each grant contains:
   - `principal` (`string`)
   - `privileges` (`list(string)`)
@@ -121,7 +120,7 @@ When `enabled = true`:
 3. For `EXTERNAL` volumes, set `storage_location`.
 4. For `MANAGED` volumes, omit `storage_location`.
 5. For any module-managed volume with non-empty `grants`, create authoritative `databricks_grants`.
-6. Pass through `force_destroy` when explicitly enabled by the caller.
+6. The module does not expose delete-force semantics because the provider resource does not support them.
 
 ## Grants Model
 
@@ -187,9 +186,8 @@ Expected runtime failure cases that remain outside Terraform static validation:
 
 Destroy contract:
 
-- the module should expose `force_destroy` with a default of `false`
-- callers should assume non-empty volume deletion is intentionally conservative by default
-- destructive removal of non-empty content requires an explicit caller opt-in through `force_destroy = true`
+- the module does not expose a `force_destroy` input because the provider resource does not support it
+- callers should assume non-empty volume deletion is intentionally conservative
 
 Expected caller responsibilities:
 

@@ -55,6 +55,18 @@ After the credential exists:
 3. Set `skip_validation = false`.
 4. Only then rely on that credential for external locations.
 
+## Unity Catalog Volumes
+
+Workspace-scoped Unity Catalog volumes are configured in `volume_config.tf`.
+
+- The root local `local.uc_volumes` defaults to `{}` and includes a commented example showing one `MANAGED` volume and one `EXTERNAL` volume with optional authoritative grants.
+- `MANAGED` volumes declare `name`, `catalog_name`, `schema_name`, and `volume_type = "MANAGED"`. They must not set `storage_location`.
+- `EXTERNAL` volumes use the same base shape but must also set `storage_location` to a path under a pre-existing external location that is already authorized for the target workspace.
+- When same-stack catalogs, schemas, external locations, groups, or service principals are managed elsewhere in this root, keep the baseline `depends_on = [module.unity_catalog_metastore_assignment, module.users_groups]` and extend it rather than replacing it.
+- Prefer passing catalog and schema names from upstream resource or module outputs instead of duplicating literals when those objects are created in the same root stack.
+- When a volume declares `grants`, Terraform manages that volume's grants authoritatively through `databricks_grants`, so out-of-band grants on the managed volume are not preserved.
+- Volume deletion remains conservative because the provider does not expose a force-delete argument for this resource.
+
 ## Create Workspace Later
 
 When you are ready for Terraform-managed workspace creation, switch:

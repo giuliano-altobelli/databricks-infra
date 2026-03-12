@@ -46,8 +46,8 @@ locals {
     for volume_key, volume in local.enabled_volumes : volume_key => {
       for principal in sort(distinct([
         for grant in volume.grants : grant.principal
-      ])) : principal => sort(distinct(flatten([
-        for grant in volume.grants : grant.principal == principal ? grant.privileges : []
+        ])) : principal => sort(distinct(flatten([
+          for grant in volume.grants : grant.principal == principal ? grant.privileges : []
       ])))
     }
   }
@@ -56,12 +56,12 @@ locals {
 resource "databricks_volume" "this" {
   for_each = local.enabled_volumes
 
-  name          = each.value.name
-  catalog_name  = each.value.catalog_name
-  schema_name   = each.value.schema_name
-  volume_type   = each.value.volume_type
-  comment       = try(each.value.comment, null)
-  owner         = try(each.value.owner, null)
+  name         = each.value.name
+  catalog_name = each.value.catalog_name
+  schema_name  = each.value.schema_name
+  volume_type  = each.value.volume_type
+  comment      = try(each.value.comment, null)
+  owner        = try(each.value.owner, null)
 
   storage_location = each.value.volume_type == "EXTERNAL" ? each.value.storage_location : null
 

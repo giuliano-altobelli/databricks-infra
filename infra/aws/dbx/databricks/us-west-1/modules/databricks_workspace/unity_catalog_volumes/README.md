@@ -44,13 +44,21 @@ module "unity_catalog_volumes" {
 
 ## Grant Ownership
 
-When `grants` are declared for a managed volume, the module uses `databricks_grants`, which is authoritative for that volume. Out-of-band grants are not preserved.
+When `grants` are declared for a module-managed volume, the module uses `databricks_grants`, which is authoritative for that volume. Out-of-band grants are not preserved for either `MANAGED` or `EXTERNAL` volumes.
+
+If an automation identity relies on `MANAGE` or any other volume privilege, keep that identity present in the authoritative `grants` set or Terraform will remove its access on the next apply.
 
 ## Destroy Safety
 
-- `force_destroy` is optional per volume and defaults to `false`.
-- Non-empty volume deletion is intentionally conservative unless the caller opts in with `force_destroy = true`.
+- The Databricks provider does not expose a force-delete argument for volumes.
+- Non-empty volume deletion is intentionally conservative and cannot be overridden by this module.
 
 ## Outputs
 
 The `volumes` output map returns `storage_location = null` for `MANAGED` volumes.
+
+## Operator Notes
+
+- Stable map keys are Terraform addresses. Renaming a key changes the resource address even if the Databricks volume name stays the same.
+- `EXTERNAL` volumes require the external location path and authorization to exist before this module runs.
+- Prefer upstream resource or module outputs for same-stack catalog and schema names when they are available.

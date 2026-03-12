@@ -28,7 +28,6 @@
     - `comment` (`optional(string)`)
     - `owner` (`optional(string)`)
     - `storage_location` (`optional(string)`)
-    - `force_destroy` (`optional(bool, false)`)
     - `grants` (`optional(list(object)), []`) with:
       - `principal` (`string`)
       - `privileges` (`list(string)`)
@@ -58,9 +57,9 @@
 - `volume_type` must be `MANAGED` or `EXTERNAL`
 - `EXTERNAL` volumes require `storage_location`
 - `MANAGED` volumes forbid `storage_location`
-- `force_destroy` defaults to `false`
 - grants are authoritative when declared
 - duplicate grant tuples and duplicate fully qualified volume identities must fail clearly
+- the provider does not expose force-delete behavior for volumes, so the module cannot override conservative deletion semantics
 - Stable caller keys are the Terraform identity for managed volumes. Renaming a key changes the Terraform address even if the Databricks volume name stays the same.
 - The module references pre-existing catalog, schema, and external-location paths by name or URI only. Callers must enforce prerequisite ordering when those objects are managed in the same root stack.
 - Supported grant privileges are limited to `ALL_PRIVILEGES`, `APPLY_TAG`, `MANAGE`, `READ_VOLUME`, and `WRITE_VOLUME`.
