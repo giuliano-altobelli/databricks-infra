@@ -26,6 +26,22 @@ locals {
         }
       ]
     }
+    # Auto Loader checkpoint volume example:
+    # - Use workspace.default for checkpoint and schema tracking state.
+    # - Keep source ingest access on the autoloader_source external location instead of this volume.
+    autoloader_checkpoint = {
+      name             = "autoloader_checkpoint"
+      catalog_name     = "workspace"
+      schema_name      = "default"
+      volume_type      = "EXTERNAL"
+      storage_location = format("%s/volumes/autoloader_checkpoint/", trimsuffix(module.unity_catalog_storage_locations.external_locations["autoloader_checkpoint_root"].url, "/"))
+      grants = [
+        {
+          principal  = "00000000-0000-0000-0000-000000000000" # Databricks Auto Loader service principal application ID
+          privileges = ["READ_VOLUME", "WRITE_VOLUME"]
+        }
+      ]
+    }
   }
   */
 }
