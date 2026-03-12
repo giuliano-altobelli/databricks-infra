@@ -52,3 +52,49 @@ locals {
     }
   }
 }
+
+resource "databricks_volume" "this" {
+  for_each = local.enabled_volumes
+
+  name          = each.value.name
+  catalog_name  = each.value.catalog_name
+  schema_name   = each.value.schema_name
+  volume_type   = each.value.volume_type
+  comment       = try(each.value.comment, null)
+  owner         = try(each.value.owner, null)
+
+  storage_location = each.value.volume_type == "EXTERNAL" ? each.value.storage_location : null
+
+  lifecycle {
+    precondition {
+      condition     = length(local.duplicate_volume_identity_keys) == 0
+      error_message = "Duplicate volume identities are not allowed: ${join(", ", sort(tolist(local.duplicate_volume_identity_keys)))}"
+    }
+  }
+}
+
+resource "databricks_grants" "volume" {
+  for_each = {
+    for volume_key, volume in local.enabled_volumes :
+    volume_key => volume
+    if length(volume.grants) > 0
+  }
+
+  volume = databricks_volume.this[each.key].id
+
+  dynamic "grant" {
+    for_each = local.volume_grants_by_principal[each.key]
+
+    content {
+      principal  = grant.key
+      privileges = grant.value
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(local.duplicate_volume_grant_tuple_keys) == 0
+      error_message = "Duplicate volume grant tuples are not allowed: ${join(", ", sort(tolist(local.duplicate_volume_grant_tuple_keys)))}"
+    }
+  }
+}
