@@ -32,6 +32,29 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
   'databricks_grant.existing_catalog_admin_grant[0]'
 ```
 
+## Unity Catalog Storage Credentials And External Locations
+
+Workspace-scoped Unity Catalog S3 storage credentials and external locations are configured in `storage_credential_config.tf`.
+
+- The root locals `local.uc_storage_credentials` and `local.uc_external_locations` default to `{}` and include a fully commented example showing multiple credentials, multiple external locations, optional grants, and optional extra `workspace_ids`.
+- Both securable types default to `workspace_access_mode = "ISOLATION_MODE_ISOLATED"`. In that default mode, Terraform always binds the securable to the current workspace and can bind additional workspaces on the same shared metastore through `workspace_ids`.
+- Set `workspace_access_mode = "ISOLATION_MODE_OPEN"` only when the securable should be visible to all workspaces on the metastore. Open mode must not declare `workspace_ids`.
+- Cross-workspace sharing is implemented through explicit `databricks_workspace_binding` resources, not by introducing additional Databricks provider aliases in this rollout.
+- Grants are optional. When declared, Terraform manages them authoritatively through `databricks_grants`, so out-of-band grants on the managed storage credential or external location are not preserved.
+- In the example patterns, storage credentials grant `CREATE_EXTERNAL_LOCATION`. External locations grant `CREATE_EXTERNAL_TABLE`, `CREATE_EXTERNAL_VOLUME`, or `CREATE_MANAGED_STORAGE` depending on the use case. Add `READ_FILES` or `WRITE_FILES` only when direct raw file access is intentional.
+- This module is Databricks-only. AWS IAM roles and S3 prefixes stay outside Terraform here; the Databricks module accepts pre-existing `role_arn` and `s3://...` URLs and emits the generated `external_id` and `unity_catalog_iam_arn` for companion AWS automation.
+
+### AWS Bootstrap Nuance
+
+If the AWS IAM trust policy has not yet been patched with the Databricks-generated `external_id`, create the storage credential first with `skip_validation = true`.
+
+After the credential exists:
+
+1. Read the emitted `external_id` and `unity_catalog_iam_arn` from the module outputs.
+2. Update the IAM trust policy outside this Terraform stack.
+3. Set `skip_validation = false`.
+4. Only then rely on that credential for external locations.
+
 ## Create Workspace Later
 
 When you are ready for Terraform-managed workspace creation, switch:
