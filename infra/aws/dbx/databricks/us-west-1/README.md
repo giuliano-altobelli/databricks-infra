@@ -38,6 +38,11 @@ The preferred entrypoint for new governed catalog work is `catalogs_config.tf`.
 
 - The governed catalog map includes the explicit `personal` catalog by default.
 - Add additional governed domain entries alongside `personal` in `local.governed_catalog_domains`.
+- Each governed catalog entry can now declare `enabled`, `display_name`, `catalog_admin_group`, and `reader_group` in addition to the existing naming and `workspace_ids` fields.
+- `catalog_admin_group` and `reader_group` use keys from `local.identity_groups` in `identify.tf`, not raw Databricks display names.
+- Defaults preserve the prior behavior: `enabled = true`, `display_name = catalog_name`, `catalog_admin_group = "platform_admins"`, and `reader_group = []`.
+- Disabled catalogs create no resources and are omitted from the root `output.catalogs` map.
+- Governed catalog grants remain catalog-level only in this rollout: admins receive `ALL_PRIVILEGES`, and reader groups receive `USE_CATALOG`.
 - The governed path is intended for new catalog rollouts. The existing isolated path in `main.tf` still coexists for backward compatibility with the legacy single-catalog workflow.
 - The legacy isolated path is planned for future archival after the governed `catalogs_config.tf` path is proven and adopted.
 - To exercise the governed fan-out in verification, populate a minimal additional non-`personal` `local.governed_catalog_domains` example in a scratch copy or temporary local edit.

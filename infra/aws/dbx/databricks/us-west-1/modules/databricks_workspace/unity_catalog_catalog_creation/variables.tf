@@ -57,6 +57,28 @@ variable "catalog_admin_principal" {
   }
 }
 
+variable "catalog_reader_principals" {
+  description = "Principals that receive catalog-level reader privileges."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = !var.enabled || alltrue([
+      for principal in var.catalog_reader_principals :
+      trimspace(principal) != ""
+    ])
+    error_message = "catalog_reader_principals must contain only non-empty principals when enabled is true."
+  }
+
+  validation {
+    condition = !var.enabled || (
+      length([for principal in var.catalog_reader_principals : trimspace(principal)]) ==
+      length(distinct([for principal in var.catalog_reader_principals : trimspace(principal)]))
+    )
+    error_message = "catalog_reader_principals must contain unique principals when enabled is true."
+  }
+}
+
 variable "workspace_id" {
   description = "workspace ID of deployed workspace."
   type        = string

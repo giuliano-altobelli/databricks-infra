@@ -12,6 +12,7 @@ output "catalogs" {
   value = {
     for catalog_key, catalog in local.catalogs :
     catalog_key => {
+      display_name                             = catalog.display_name
       catalog_kind                             = catalog.catalog_kind
       catalog_name                             = module.governed_catalogs[catalog_key].catalog_name
       catalog_bucket_name                      = module.governed_catalogs[catalog_key].catalog_bucket_name

@@ -1,6 +1,9 @@
 locals {
   enabled_catalog         = var.enabled
   aws_safe_catalog_suffix = replace(var.catalog_name, "_", "-")
+  normalized_catalog_reader_principals = [
+    for principal in var.catalog_reader_principals : trimspace(principal)
+  ]
 
   # Preserve the existing isolated resource names when the legacy caller maps
   # its old workspace-scoped naming formula into the new interface.
@@ -366,6 +369,15 @@ resource "databricks_grants" "workspace_catalog" {
   grant {
     principal  = var.catalog_admin_principal
     privileges = ["ALL_PRIVILEGES"]
+  }
+
+  dynamic "grant" {
+    for_each = local.normalized_catalog_reader_principals
+
+    content {
+      principal  = grant.value
+      privileges = ["USE_CATALOG"]
+    }
   }
 }
 

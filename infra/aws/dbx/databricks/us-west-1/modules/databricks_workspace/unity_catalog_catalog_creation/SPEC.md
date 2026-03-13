@@ -3,7 +3,7 @@
 ## Summary
 
 - **Module name**: `databricks_workspace/unity_catalog_catalog_creation`
-- **One-liner**: Create one AWS-backed, workspace-isolated Unity Catalog catalog plus its directly required storage bootstrap, bindings, and admin grant.
+- **One-liner**: Create one AWS-backed, workspace-isolated Unity Catalog catalog plus its directly required storage bootstrap, bindings, and authoritative catalog grants.
 
 ## Scope
 
@@ -43,6 +43,7 @@
   - `catalog_admin_principal` (`string`)
 - Optional inputs:
   - `enabled` (`bool`, default `true`)
+  - `catalog_reader_principals` (`list(string)`, default `[]`)
   - `workspace_ids` (`list(string)`, default `[]`)
   - `set_default_namespace` (`bool`, default `false`)
 - Outputs:
@@ -98,7 +99,9 @@
   - `workspace_ids` adds extra isolated bindings on the same metastore
   - this change does not implement open/shared visibility
 - Grant behavior:
-  - the governed path manages the catalog admin grant authoritatively through `databricks_grants`
+  - the governed path manages catalog grants authoritatively through `databricks_grants`
+  - `catalog_admin_principal` receives `ALL_PRIVILEGES`
+  - each entry in `catalog_reader_principals` receives `USE_CATALOG`
   - the legacy isolated path preserves its existing `databricks_grant` state shape and additive grant semantics by continuing to manage only the legacy bootstrap principal grant
   - out-of-band catalog grants are not preserved on governed catalogs, but legacy isolated catalogs retain the legacy non-authoritative behavior until that path is archived
 
@@ -120,6 +123,7 @@
 - Module-level input validation must reject:
   - blank `catalog_name` when enabled
   - blank `catalog_admin_principal` when enabled
+  - blank or duplicate `catalog_reader_principals` entries when enabled
   - blank or non-numeric `workspace_id` when enabled
   - blank or non-numeric entries in `workspace_ids`
   - duplicate workspace-binding tuples

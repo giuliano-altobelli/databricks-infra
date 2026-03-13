@@ -22,6 +22,7 @@ module "revenue_catalog" {
 
   catalog_name            = "prod_salesforce_revenue"
   catalog_admin_principal = "Platform Admins"
+  catalog_reader_principals = ["Revenue Readers"]
   workspace_ids           = ["1234567890123456"]
   set_default_namespace   = false
 }
@@ -44,7 +45,9 @@ module "revenue_catalog" {
 
 ## Grant Ownership
 
-- Governed catalogs manage one authoritative catalog admin grant set for `catalog_admin_principal` through `databricks_grants`.
+- Governed catalogs manage authoritative catalog grants through `databricks_grants`.
+- `catalog_admin_principal` receives `ALL_PRIVILEGES`.
+- Each principal in `catalog_reader_principals` receives `USE_CATALOG`.
 - The legacy isolated caller preserves its existing `databricks_grant` state shape and additive behavior for the bootstrap/admin principal, so out-of-band grants remain legacy-compatible on that path.
 - The governed root caller defaults this principal to `Platform Admins`. The legacy isolated caller remains compatible by passing its existing admin principal instead.
 
