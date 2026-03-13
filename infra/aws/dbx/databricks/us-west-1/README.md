@@ -70,17 +70,20 @@ After the credential exists:
 3. Set `skip_validation = false`.
 4. Only then rely on that credential for external locations.
 
-## Unity Catalog Volumes
+## Governed Unity Catalog Schemas And Managed Volumes
 
-Workspace-scoped Unity Catalog volumes are configured in `volume_config.tf`.
+Governed Unity Catalog schemas and optional governed managed volumes are configured in `schema_config.tf`.
 
-- The root local `local.uc_volumes` defaults to `{}` and includes a commented example showing one `MANAGED` volume and one `EXTERNAL` volume with optional authoritative grants.
-- `MANAGED` volumes declare `name`, `catalog_name`, `schema_name`, and `volume_type = "MANAGED"`. They must not set `storage_location`.
-- `EXTERNAL` volumes use the same base shape but must also set `storage_location` to a path under a pre-existing external location that is already authorized for the target workspace.
-- When same-stack catalogs, schemas, external locations, groups, or service principals are managed elsewhere in this root, keep the baseline `depends_on = [module.unity_catalog_metastore_assignment, module.users_groups]` and extend it rather than replacing it.
-- Prefer passing catalog and schema names from upstream resource or module outputs instead of duplicating literals when those objects are created in the same root stack.
-- When a volume declares `grants`, Terraform manages that volume's grants authoritatively through `databricks_grants`, so out-of-band grants on the managed volume are not preserved.
-- Volume deletion remains conservative because the provider does not expose a force-delete argument for this resource.
+- Each governed catalog receives the standard schema set: `raw`, `base`, `staging`, `final`, and `uat`.
+- This rollout creates governed schemas only. It does not create `personal.<user_key>` schemas.
+- Governed catalog keys omitted from `local.governed_schema_config` still receive the standard schemas and default schema grants.
+- Default schema grants are derived from `catalogs_config.tf`: catalog admins receive `ALL_PRIVILEGES`, and catalog readers receive `USE_SCHEMA`.
+- Optional managed volumes are declared under `managed_volumes` inside `local.governed_schema_config`.
+- Governed managed volumes are flattened into the existing `unity_catalog_volumes` module as `MANAGED` volumes.
+- Omitted managed-volume `grants` inherit admin `ALL_PRIVILEGES` and reader `READ_VOLUME`.
+- Explicit managed-volume `grants` replace the derived defaults rather than merging with them.
+- Commented `uat_writer_principals` and `release_writer_principals` examples in `schema_config.tf` are placeholders only in this rollout and do not affect grants.
+- The checked-in governed `volume_config.tf` entrypoint was intentionally removed so governed schema and managed-volume policy live in one place.
 
 ## Create Workspace Later
 
