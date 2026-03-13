@@ -32,6 +32,16 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
   'databricks_grant.existing_catalog_admin_grant[0]'
 ```
 
+## Governed Catalog Creation
+
+The preferred entrypoint for new governed catalog work is `catalogs_config.tf`.
+
+- The governed catalog map includes the explicit `personal` catalog by default.
+- Add additional governed domain entries alongside `personal` in `local.governed_catalog_domains`.
+- The governed path is intended for new catalog rollouts. The existing isolated path in `main.tf` still coexists for backward compatibility with the legacy single-catalog workflow.
+- The legacy isolated path is planned for future archival after the governed `catalogs_config.tf` path is proven and adopted.
+- To exercise the governed fan-out in verification, populate a minimal additional non-`personal` `local.governed_catalog_domains` example in a scratch copy or temporary local edit.
+
 ## Unity Catalog Storage Credentials And External Locations
 
 Workspace-scoped Unity Catalog S3 storage credentials and external locations are configured in `storage_credential_config.tf`.

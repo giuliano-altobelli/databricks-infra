@@ -6,7 +6,7 @@ Date: 2026-03-05
 
 Standardize Unity Catalog naming, data boundaries, and access controls for a **single Databricks workspace** while preserving the Option 1 namespace convention:
 
-- Governed (shared) domains: `prod_<source>_<business_area>.<schema>.<object>`
+- Governed (shared) domains: `prod_<source>_<business_area>.<schema>.<object>` when `business_area` is present, otherwise `prod_<source>.<schema>.<object>`
 - Personal development: `personal.<user_schema>.<object>`
 
 ## Context
@@ -39,7 +39,8 @@ In this phase:
 
 Catalog naming:
 
-- `prod_<source>_<business_area>`
+- `prod_<source>_<business_area>` when `business_area` is present
+- `prod_<source>` when `business_area` is empty
 
 Schemas in each domain catalog:
 
@@ -49,13 +50,14 @@ Schemas in each domain catalog:
 Examples:
 
 - Prod object: `prod_salesforce_revenue.final.customer_dim`
+- Prod object without business area: `prod_hubspot.final.company_dim`
 - Shareable UAT object: `prod_salesforce_revenue.uat.customer_dim_candidate`
 
 Conventions:
 
 - `<source>` is the upstream system/vendor (10s, <100).
-- `<business_area>` is the organizational data domain.
-- If business area is missing, use a consistent sentinel (recommended: `unassigned`).
+- `<business_area>` is the organizational data domain when present.
+- If `business_area` is empty, do not use a sentinel. The catalog name collapses to `prod_<source>`.
 - If an object spans multiple business areas, it is acceptable to **duplicate** it across domains (no canonical shared location required initially).
 
 ### Personal catalog
@@ -105,7 +107,7 @@ Principles:
 
 #### Domain readers
 
-For each domain catalog `prod_<source>_<business_area>`:
+For each governed domain catalog (`prod_<source>_<business_area>` when `business_area` is present, otherwise `prod_<source>`):
 
 - Readers can read from `raw/base/staging/final` and from `uat`.
 - Typical privileges:
@@ -117,8 +119,8 @@ For each domain catalog `prod_<source>_<business_area>`:
 
 One service principal used by CI for PR-driven promotion into domain `uat` schemas.
 
-- Has read/write access to all `prod_<source>_<business_area>.uat` schemas.
-- Has **no access** (read or write) to `prod_<source>_<business_area>.(raw|base|staging|final)`.
+- Has read/write access to all governed domain `uat` schemas.
+- Has **no access** (read or write) to governed domain `raw`, `base`, `staging`, or `final` schemas.
 - Typical privileges (on each `uat` schema):
   - `USE_CATALOG`, `USE_SCHEMA`
   - Table/view write privileges as needed by the artifact type (e.g. `CREATE_TABLE`, `MODIFY`, or `ALL_PRIVILEGES` scoped to the `uat` schema)
@@ -127,7 +129,7 @@ One service principal used by CI for PR-driven promotion into domain `uat` schem
 
 One service principal used by CI for publishing into governed production layer schemas.
 
-- Has full access to all `prod_<source>_<business_area>.(raw|base|staging|final)` schemas.
+- Has full access to all governed domain `raw`, `base`, `staging`, and `final` schemas.
 - Publishing is executed via controlled pipelines (not ad-hoc human interactive compute).
 
 #### Personal schemas
@@ -152,7 +154,7 @@ Use two provider scopes (already present in this repo):
 
 Planned declarative inputs:
 
-- Domain catalog matrix: `(source, business_area)` list
+- Domain catalog matrix: `(source, business_area)` list, where `business_area` may be empty and renders `prod_<source>`
 - Domain read principals per domain
 - UAT promotion service principal identifier (for `uat` write grants)
 - Release service principal identifier (for production layer write grants)

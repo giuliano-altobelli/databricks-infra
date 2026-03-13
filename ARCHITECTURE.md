@@ -6,7 +6,9 @@ This repository currently targets a **single Databricks workspace**. Unity Catal
 
 ### Namespaces
 
-- **Governed domain catalogs:** `prod_<source>_<business_area>`
+- **Governed domain catalogs:**
+  - `prod_<source>_<business_area>` when `business_area` is present
+  - `prod_<source>` when `business_area` is empty
   - Schemas: `raw`, `base`, `staging`, `final`, plus `uat`
 - **Personal development catalog:** `personal`
   - Schemas: `personal.<user_key>` for each user present in the workspace-level `okta-databricks-users` group
@@ -15,17 +17,18 @@ This repository currently targets a **single Databricks workspace**. Unity Catal
 Examples:
 
 - Prod object: `prod_salesforce_revenue.final.customer_dim`
+- Prod object without business area: `prod_hubspot.final.company_dim`
 - Shareable UAT object: `prod_salesforce_revenue.uat.customer_dim_candidate`
 - Personal build artifact: `personal.jane_doe.customer_dim_candidate`
 
 ### Access model (intent)
 
 - Humans write only in `personal.<user_key>`.
-- The **UAT promotion** service principal has read/write access to all `prod_<source>_<business_area>.uat` schemas, but **no access** to `prod_<source>_<business_area>.(raw|base|staging|final)`.
-- The **release** service principal has full access to all `prod_<source>_<business_area>.(raw|base|staging|final)` schemas.
+- The **UAT promotion** service principal has read/write access to all governed domain `uat` schemas, but **no access** to governed `raw`, `base`, `staging`, or `final` schemas.
+- The **release** service principal has full access to all governed `raw`, `base`, `staging`, and `final` schemas.
 - Domain readers can read both:
-  - `prod_<source>_<business_area>.(raw|base|staging|final)`
-  - `prod_<source>_<business_area>.uat`
+  - governed `prod_*` production-layer schemas
+  - governed `prod_*` `uat` schemas
 - The workspace default namespace remains unchanged for now; future recommendation is to set it to `personal` to reduce accidental writes into governed catalogs.
 
 Detailed design: `docs/design-docs/unity-catalog.md`
@@ -65,7 +68,7 @@ flowchart LR
 Notes:
 
 - Before the workflow below starts, the developer must already be provisioned through Okta SCIM and present in `okta-databricks-users` at the account and workspace levels.
-- On PR submission, CI automatically promotes shareable artifacts into `prod_<source>_<business_area>.uat` using the **UAT promotion** service principal.
+- On PR submission, CI automatically promotes shareable artifacts into the target governed domain `uat` schema using the **UAT promotion** service principal (`prod_<source>_<business_area>.uat` when `business_area` is present, otherwise `prod_<source>.uat`).
 - After approval, a `"databricks deploy"` comment triggers publish into the governed production layer schemas using the **release** service principal.
 - In the single-workspace phase, strict Unity Catalog grants and workspace compute controls are required to prevent accidental writes into governed production layer schemas.
 

@@ -1,3 +1,9 @@
+variable "enabled" {
+  description = "Whether this module is enabled."
+  type        = bool
+  default     = true
+}
+
 variable "aws_account_id" {
   type        = string
   description = "ID of the AWS account."
@@ -31,17 +37,57 @@ variable "resource_prefix" {
   type        = string
 }
 
-variable "uc_catalog_name" {
-  description = "UC catalog name isolated to the workspace."
+variable "catalog_name" {
+  description = "Unity Catalog catalog name."
   type        = string
+
+  validation {
+    condition     = !var.enabled || trimspace(var.catalog_name) != ""
+    error_message = "catalog_name must be non-empty when enabled is true."
+  }
 }
 
-variable "user_workspace_catalog_admin" {
-  description = "Workspace catalog admin - same user as the account admin."
+variable "catalog_admin_principal" {
+  description = "Principal that receives catalog admin privileges."
   type        = string
+
+  validation {
+    condition     = !var.enabled || trimspace(var.catalog_admin_principal) != ""
+    error_message = "catalog_admin_principal must be non-empty when enabled is true."
+  }
 }
 
 variable "workspace_id" {
   description = "workspace ID of deployed workspace."
   type        = string
+
+  validation {
+    condition     = !var.enabled || trimspace(var.workspace_id) != ""
+    error_message = "workspace_id must be non-empty when enabled is true."
+  }
+
+  validation {
+    condition     = !var.enabled || can(tonumber(var.workspace_id))
+    error_message = "workspace_id must be numeric when enabled is true."
+  }
+}
+
+variable "workspace_ids" {
+  description = "Additional workspace IDs that receive isolated workspace bindings."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = !var.enabled || alltrue([
+      for workspace_id in var.workspace_ids :
+      trimspace(workspace_id) != "" && can(tonumber(workspace_id))
+    ])
+    error_message = "workspace_ids must contain only non-empty numeric strings when enabled is true."
+  }
+}
+
+variable "set_default_namespace" {
+  description = "Whether to manage the workspace default namespace for this catalog."
+  type        = bool
+  default     = false
 }
