@@ -3,27 +3,6 @@
 # =============================================================================
 
 locals {
-  governed_schema_config = {
-    # salesforce_revenue = {
-    #   managed_volumes = {
-    #     final = {
-    #       model_artifacts = {
-    #         name = "model_artifacts"
-    #       }
-    #     }
-    #     uat = {
-    #       candidate_assets = {
-    #         name = "candidate_assets"
-    #       }
-    #     }
-    #   }
-    #
-    #   # Placeholder only for future schema-writer rollout:
-    #   # uat_writer_principals     = ["00000000-0000-0000-0000-000000000000"]
-    #   # release_writer_principals = ["11111111-1111-1111-1111-111111111111"]
-    # }
-  }
-
   standard_governed_schema_names = ["raw", "base", "staging", "final", "uat"]
 
   governed_catalogs_for_schemas = {
@@ -32,11 +11,11 @@ locals {
     if catalog.catalog_kind == "governed"
   }
 
-  normalized_governed_schema_config = {
-    for catalog_key, catalog in local.governed_catalogs_for_schemas :
-    catalog_key => {
+  normalized_catalog_types_config = {
+    for catalog_type_key, catalog_type in local.catalog_types_config :
+    catalog_type_key => {
       managed_volumes = {
-        for schema_name, volumes in try(local.governed_schema_config[catalog_key].managed_volumes, {}) :
+        for schema_name, volumes in try(catalog_type.managed_volumes, {}) :
         schema_name => {
           for volume_key, volume in volumes :
           volume_key => {
@@ -45,6 +24,48 @@ locals {
             owner   = try(volume.owner, null)
             grants  = try(volume.grants, null)
           }
+        }
+      }
+    }
+  }
+
+  normalized_catalog_managed_volume_overrides = {
+    for catalog_key, catalog in local.governed_catalogs_for_schemas :
+    catalog_key => {
+      managed_volumes = {
+        for schema_name, volumes in try(catalog.managed_volume_overrides, {}) :
+        schema_name => {
+          for volume_key, volume in volumes :
+          volume_key => {
+            name    = trimspace(try(volume.name, volume_key))
+            comment = try(volume.comment, null)
+            owner   = try(volume.owner, null)
+            grants  = try(volume.grants, null)
+          }
+        }
+      }
+    }
+  }
+
+  effective_governed_schema_config = {
+    for catalog_key, catalog in local.governed_catalogs_for_schemas :
+    catalog_key => {
+      managed_volumes = {
+        for schema_name in distinct(concat(
+          keys(try(local.normalized_catalog_types_config[catalog.catalog_type].managed_volumes, {})),
+          keys(local.normalized_catalog_managed_volume_overrides[catalog_key].managed_volumes)
+        )) :
+        schema_name => {
+          for volume_key in distinct(concat(
+            keys(try(local.normalized_catalog_types_config[catalog.catalog_type].managed_volumes[schema_name], {})),
+            keys(try(local.normalized_catalog_managed_volume_overrides[catalog_key].managed_volumes[schema_name], {}))
+          )) :
+          # Matching overrides intentionally replace template attributes rather
+          # than deep-merging list fields such as grants.
+          volume_key => merge(
+            try(local.normalized_catalog_types_config[catalog.catalog_type].managed_volumes[schema_name][volume_key], {}),
+            try(local.normalized_catalog_managed_volume_overrides[catalog_key].managed_volumes[schema_name][volume_key], {})
+          )
         }
       }
     }
@@ -81,7 +102,7 @@ locals {
   governed_managed_volumes = {
     for record in flatten([
       for catalog_key, catalog in local.governed_catalogs_for_schemas : [
-        for schema_name, volumes in local.normalized_governed_schema_config[catalog_key].managed_volumes : [
+        for schema_name, volumes in local.effective_governed_schema_config[catalog_key].managed_volumes : [
           for volume_key, volume in volumes : {
             key = "${catalog_key}:${schema_name}:${volume_key}"
             value = {
@@ -112,6 +133,11 @@ locals {
     ]) : record.key => record.value
   }
 
+  governed_managed_volume_schema_names = distinct(flatten([
+    for catalog in values(local.effective_governed_schema_config) :
+    keys(catalog.managed_volumes)
+  ]))
+
   managed_volume_identity_keys = [
     for volume in values(local.governed_managed_volumes) :
     format(
@@ -130,56 +156,34 @@ locals {
   ])
 }
 
-check "governed_schema_config_known_catalog_keys" {
-  assert {
-    condition = length(setsubtract(
-      keys(local.governed_schema_config),
-      keys(local.catalogs)
-    )) == 0
-    error_message = "governed_schema_config keys must already exist in local.catalogs."
-  }
-}
-
-check "governed_schema_config_governed_catalog_only" {
-  assert {
-    condition = length(setsubtract(
-      keys(local.governed_schema_config),
-      keys(local.governed_catalogs_for_schemas)
-    )) == 0
-    error_message = "governed_schema_config may reference governed catalogs only."
-  }
-}
-
 check "governed_managed_volume_schema_names" {
   assert {
-    condition = alltrue(flatten([
-      for catalog in values(local.normalized_governed_schema_config) : [
-        for schema_name, volumes in catalog.managed_volumes :
-        contains(local.standard_governed_schema_names, schema_name)
-      ]
-    ]))
+    condition = alltrue([
+      for schema_name in local.governed_managed_volume_schema_names :
+      contains(local.standard_governed_schema_names, schema_name)
+    ])
     error_message = "Managed volumes may be declared only under raw, base, staging, final, or uat."
   }
 }
 
-check "governed_managed_volume_override_lists" {
+check "governed_managed_volume_grant_lists" {
   assert {
     condition = alltrue(flatten([
-      for catalog in values(local.normalized_governed_schema_config) : [
+      for catalog in values(local.effective_governed_schema_config) : [
         for volumes in values(catalog.managed_volumes) : [
           for volume in values(volumes) :
           try(volume.grants, null) == null || length(volume.grants) > 0
         ]
       ]
     ]))
-    error_message = "Managed-volume grant overrides must be omitted to inherit defaults or set to a non-empty replacement list."
+    error_message = "Managed-volume grants must be omitted to inherit defaults or set to a non-empty replacement list."
   }
 }
 
 check "governed_managed_volume_names" {
   assert {
     condition = alltrue(flatten([
-      for catalog in values(local.normalized_governed_schema_config) : [
+      for catalog in values(local.effective_governed_schema_config) : [
         for volumes in values(catalog.managed_volumes) : [
           for volume in values(volumes) :
           trimspace(volume.name) != ""
@@ -190,10 +194,10 @@ check "governed_managed_volume_names" {
   }
 }
 
-check "governed_managed_volume_override_principals" {
+check "governed_managed_volume_grant_principals" {
   assert {
     condition = alltrue(flatten([
-      for catalog in values(local.normalized_governed_schema_config) : [
+      for catalog in values(local.effective_governed_schema_config) : [
         for volumes in values(catalog.managed_volumes) : [
           for volume in values(volumes) : [
             for grant in volume.grants == null ? [] : volume.grants : trimspace(grant.principal) != ""
@@ -201,14 +205,14 @@ check "governed_managed_volume_override_principals" {
         ]
       ]
     ]))
-    error_message = "Managed-volume override grant principals must be non-empty."
+    error_message = "Managed-volume grant principals must be non-empty."
   }
 }
 
-check "governed_managed_volume_override_privilege_lists" {
+check "governed_managed_volume_grant_privilege_lists" {
   assert {
     condition = alltrue(flatten([
-      for catalog in values(local.normalized_governed_schema_config) : [
+      for catalog in values(local.effective_governed_schema_config) : [
         for volumes in values(catalog.managed_volumes) : [
           for volume in values(volumes) : [
             for grant in volume.grants == null ? [] : volume.grants : length(grant.privileges) > 0
@@ -216,14 +220,14 @@ check "governed_managed_volume_override_privilege_lists" {
         ]
       ]
     ]))
-    error_message = "Managed-volume override grants must declare at least one privilege."
+    error_message = "Managed-volume grants must declare at least one privilege."
   }
 }
 
-check "governed_managed_volume_override_privileges" {
+check "governed_managed_volume_grant_privileges" {
   assert {
     condition = alltrue(flatten([
-      for catalog in values(local.normalized_governed_schema_config) : [
+      for catalog in values(local.effective_governed_schema_config) : [
         for volumes in values(catalog.managed_volumes) : [
           for volume in values(volumes) : [
             for grant in volume.grants == null ? [] : volume.grants : [
@@ -234,7 +238,7 @@ check "governed_managed_volume_override_privileges" {
         ]
       ]
     ]))
-    error_message = "Managed-volume override privileges must be one of: ALL_PRIVILEGES, APPLY_TAG, MANAGE, READ_VOLUME, WRITE_VOLUME."
+    error_message = "Managed-volume grant privileges must be one of: ALL_PRIVILEGES, APPLY_TAG, MANAGE, READ_VOLUME, WRITE_VOLUME."
   }
 }
 

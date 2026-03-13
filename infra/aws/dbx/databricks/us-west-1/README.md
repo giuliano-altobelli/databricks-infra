@@ -61,9 +61,13 @@ The preferred entrypoint for new governed catalog work is `catalogs_config.tf`.
 
 - The governed catalog map includes the explicit `personal` catalog by default.
 - Add additional governed domain entries alongside `personal` in `local.governed_catalog_domains`.
-- Each governed catalog entry can now declare `enabled`, `display_name`, `catalog_admin_group`, and `reader_group` in addition to the existing naming and `workspace_ids` fields.
+- Reusable governed schema and managed-volume patterns now live in `catalog_types_config.tf` as `local.catalog_types_config`.
+- Each governed catalog entry can now declare `enabled`, `display_name`, `catalog_type`, `catalog_admin_group`, `reader_group`, and `managed_volume_overrides` in addition to the existing naming and `workspace_ids` fields.
 - `catalog_admin_group` and `reader_group` use keys from `local.identity_groups` in `identify.tf`, not raw Databricks display names.
-- Defaults preserve the prior behavior: `enabled = true`, `display_name = catalog_name`, `catalog_admin_group = "platform_admins"`, and `reader_group = []`.
+- `catalog_type` must reference a key in `local.catalog_types_config`. Governed catalogs default to `catalog_type = "standard_governed"`.
+- `managed_volume_overrides` is optional and can add or replace managed-volume definitions from the referenced catalog type without duplicating the whole template.
+- When an override matches an existing template-managed volume, the override replaces only the attributes it sets. If it sets `grants`, that override replaces the template grant list for that volume.
+- Defaults preserve the prior behavior: `enabled = true`, `display_name = catalog_name`, `catalog_admin_group = "platform_admins"`, `reader_group = []`, and no managed volumes.
 - Disabled catalogs create no resources and are omitted from the root `output.catalogs` map.
 - Governed catalog grants remain catalog-level only in this rollout: admins receive `ALL_PRIVILEGES`, and reader groups receive `USE_CATALOG`.
 - The governed path is intended for new catalog rollouts. The existing isolated path in `main.tf` still coexists for backward compatibility with the legacy single-catalog workflow.
@@ -95,17 +99,17 @@ After the credential exists:
 
 ## Governed Unity Catalog Schemas And Managed Volumes
 
-Governed Unity Catalog schemas and optional governed managed volumes are configured in `schema_config.tf`.
+Governed Unity Catalog schemas and optional governed managed volumes are derived in `schema_config.tf` from `catalogs_config.tf` and `catalog_types_config.tf`.
 
 - Each governed catalog receives the standard schema set: `raw`, `base`, `staging`, `final`, and `uat`.
 - This rollout creates governed schemas only. It does not create `personal.<user_key>` schemas.
-- Governed catalog keys omitted from `local.governed_schema_config` still receive the standard schemas and default schema grants.
 - Default schema grants are derived from `catalogs_config.tf`: catalog admins receive `ALL_PRIVILEGES`, and catalog readers receive `USE_SCHEMA`.
-- Optional managed volumes are declared under `managed_volumes` inside `local.governed_schema_config`.
+- Optional reusable managed volumes are declared under `managed_volumes` inside `local.catalog_types_config`.
+- Catalog-specific managed-volume additions or replacements are declared under `managed_volume_overrides` on each governed catalog entry in `catalogs_config.tf`.
 - Governed managed volumes are flattened into the existing `unity_catalog_volumes` module as `MANAGED` volumes.
+- Catalog type keys plus managed-volume map keys are part of the stable Terraform identity for derived managed volumes. Renaming them changes Terraform addresses even if the Databricks volume name stays the same.
 - Omitted managed-volume `grants` inherit admin `ALL_PRIVILEGES` and reader `READ_VOLUME`.
-- Explicit managed-volume `grants` replace the derived defaults rather than merging with them.
-- Commented `uat_writer_principals` and `release_writer_principals` examples in `schema_config.tf` are placeholders only in this rollout and do not affect grants.
+- Explicit managed-volume `grants` replace the derived defaults rather than merging with them. The same replacement behavior applies when a catalog override sets `grants` for a template-defined volume.
 - The checked-in governed `volume_config.tf` entrypoint was intentionally removed so governed schema and managed-volume policy live in one place.
 
 ## Create Workspace Later

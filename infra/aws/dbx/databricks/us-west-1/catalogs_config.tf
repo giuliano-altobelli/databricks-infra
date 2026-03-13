@@ -21,8 +21,16 @@ locals {
     #   display_name        = "Salesforce Revenue"
     #   source              = "salesforce"
     #   business_area       = "revenue"
+    #   catalog_type        = "standard_governed"
     #   catalog_admin_group = "platform_admins"
     #   reader_group        = []
+    #   managed_volume_overrides = {
+    #     final = {
+    #       model_artifacts = {
+    #         name = "model_artifacts"
+    #       }
+    #     }
+    #   }
     #   # workspace_ids     = ["1234567890123456"] # Optional future shared-metastore visibility
     # }
     # hubspot_shared = {
@@ -30,6 +38,7 @@ locals {
     #   display_name        = "HubSpot Shared"
     #   source              = "hubspot"
     #   business_area       = ""
+    #   catalog_type        = "standard_governed"
     #   catalog_admin_group = "platform_admins"
     #   reader_group        = []
     # }
@@ -38,15 +47,17 @@ locals {
   normalized_governed_catalog_domains = {
     for catalog_key, domain in local.governed_catalog_domains :
     catalog_key => {
-      enabled             = try(domain.enabled, true)
-      display_name        = trimspace(try(domain.display_name, ""))
-      catalog_kind        = trimspace(try(domain.catalog_kind, "governed"))
-      catalog_name        = trimspace(try(domain.catalog_name, ""))
-      source              = trimspace(try(domain.source, ""))
-      business_area       = trimspace(try(domain.business_area, ""))
-      catalog_admin_group = trimspace(try(domain.catalog_admin_group, "platform_admins"))
-      reader_group        = [for group_key in try(domain.reader_group, []) : trimspace(group_key)]
-      workspace_ids       = [for workspace_id in try(domain.workspace_ids, []) : trimspace(workspace_id)]
+      enabled                  = try(domain.enabled, true)
+      display_name             = trimspace(try(domain.display_name, ""))
+      catalog_kind             = trimspace(try(domain.catalog_kind, "governed"))
+      catalog_name             = trimspace(try(domain.catalog_name, ""))
+      source                   = trimspace(try(domain.source, ""))
+      business_area            = trimspace(try(domain.business_area, ""))
+      catalog_type             = trimspace(try(domain.catalog_type, ""))
+      catalog_admin_group      = trimspace(try(domain.catalog_admin_group, "platform_admins"))
+      reader_group             = [for group_key in try(domain.reader_group, []) : trimspace(group_key)]
+      managed_volume_overrides = try(domain.managed_volume_overrides, null) == null ? {} : try(domain.managed_volume_overrides, {})
+      workspace_ids            = [for workspace_id in try(domain.workspace_ids, []) : trimspace(workspace_id)]
     }
   }
 
@@ -61,6 +72,7 @@ locals {
       enabled                 = domain.enabled
       display_name            = domain.display_name != "" ? domain.display_name : local.derived_governed_catalog_names[catalog_key]
       catalog_kind            = domain.catalog_kind == "" ? "governed" : domain.catalog_kind
+      catalog_type            = (domain.catalog_kind == "" ? "governed" : domain.catalog_kind) == "governed" ? (domain.catalog_type != "" ? domain.catalog_type : "standard_governed") : ""
       catalog_name            = local.derived_governed_catalog_names[catalog_key]
       aws_safe_catalog_suffix = replace(local.derived_governed_catalog_names[catalog_key], "_", "-")
       catalog_admin_group     = domain.catalog_admin_group
@@ -70,7 +82,8 @@ locals {
         for group_key in domain.reader_group :
         try(local.identity_groups[group_key].display_name, "")
       ]
-      workspace_ids = domain.workspace_ids
+      managed_volume_overrides = (domain.catalog_kind == "" ? "governed" : domain.catalog_kind) == "governed" ? domain.managed_volume_overrides : {}
+      workspace_ids            = domain.workspace_ids
     }
   }
 
@@ -148,6 +161,28 @@ check "governed_catalog_reader_groups_exclude_admin" {
       !domain.enabled || !contains(domain.reader_group, domain.catalog_admin_group)
     ])
     error_message = "Each enabled governed catalog reader_group list must not include catalog_admin_group."
+  }
+}
+
+check "governed_catalog_types" {
+  assert {
+    condition = alltrue([
+      for domain in values(local.derived_governed_catalogs) :
+      !domain.enabled || domain.catalog_kind != "governed" || contains(keys(local.catalog_types_config), domain.catalog_type)
+    ])
+    error_message = "Each enabled governed catalog catalog_type must reference a key defined in local.catalog_types_config."
+  }
+}
+
+check "non_governed_catalog_schema_fields" {
+  assert {
+    condition = alltrue([
+      for domain in values(local.normalized_governed_catalog_domains) :
+      !domain.enabled || (domain.catalog_kind == "" ? "governed" : domain.catalog_kind) == "governed" || (
+        domain.catalog_type == "" && length(keys(domain.managed_volume_overrides)) == 0
+      )
+    ])
+    error_message = "Non-governed catalogs must not declare catalog_type or managed_volume_overrides."
   }
 }
 
