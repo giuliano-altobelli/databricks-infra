@@ -32,6 +32,16 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
   'databricks_grant.existing_catalog_admin_grant[0]'
 ```
 
+## Service Principal Identity Catalog
+
+`service_principals.tf` is the root catalog for Terraform-managed Databricks service principals.
+
+- The checked-in example demonstrates one account-scoped principal (`uat_promotion`) and one workspace-scoped principal (`workspace_agent`).
+- The file is intentionally disabled by default on `main` with `local.service_principals_enabled = false`.
+- Replace the example display names with real service principal names before setting `service_principals_enabled = true`.
+- This layer manages only service principal creation, optional workspace assignment, and workspace entitlements.
+- Credentials, Unity Catalog grants, warehouse permissions, group membership, and account roles remain outside this file.
+
 ## Governed Catalog Creation
 
 The preferred entrypoint for new governed catalog work is `catalogs_config.tf`.
