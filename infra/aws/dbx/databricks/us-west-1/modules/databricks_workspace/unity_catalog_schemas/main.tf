@@ -58,6 +58,7 @@ resource "databricks_schema" "this" {
   catalog_name = each.value.catalog_name
   name         = each.value.schema_name
   comment      = try(each.value.comment, null)
+  properties   = try(each.value.properties, null)
 
   lifecycle {
     precondition {

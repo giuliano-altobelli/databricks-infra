@@ -4,13 +4,30 @@
 
 locals {
   catalog_types_config = {
-    # Catalog type keys and nested managed-volume keys become part of the
-    # stable Terraform identity for derived managed volumes. Rename with care.
+    # Catalog type keys, nested schema keys, and nested managed-volume keys
+    # become part of the stable Terraform identity for derived governed
+    # resources. Rename with care.
     standard_governed = {
+      schemas = {
+        raw     = {}
+        base    = {}
+        staging = {}
+        final   = {}
+        uat     = {}
+      }
+
       managed_volumes = {}
     }
 
     # shared_ml_assets = {
+    #   schemas = {
+    #     raw     = {}
+    #     base    = {}
+    #     staging = {}
+    #     final   = {}
+    #     uat     = {}
+    #   }
+    #
     #   managed_volumes = {
     #     final = {
     #       model_artifacts = {

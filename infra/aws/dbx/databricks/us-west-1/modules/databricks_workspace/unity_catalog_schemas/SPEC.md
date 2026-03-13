@@ -3,12 +3,13 @@
 ## Summary
 
 - **Module name**: `databricks_workspace/unity_catalog_schemas`
-- **One-liner**: Manage workspace-scoped Unity Catalog schemas plus optional authoritative schema grants.
+- **One-liner**: Manage workspace-scoped Unity Catalog schemas plus optional schema properties and authoritative schema grants.
 
 ## Scope
 
 - In scope:
   - one `databricks_schema` resource per schema entry
+  - optional schema `properties` passthrough to `databricks_schema`
   - one authoritative `databricks_grants` resource per schema entry when grants are declared
   - workspace-level Databricks provider only
   - duplicate detection for fully qualified schema identities and grant tuples
@@ -26,6 +27,7 @@
   - `schemas[*].catalog_name` (`string`)
   - `schemas[*].schema_name` (`string`)
   - `schemas[*].comment` (`optional(string)`)
+  - `schemas[*].properties` (`optional(map(string))`)
   - `schemas[*].grants[*].principal` (`string`)
   - `schemas[*].grants[*].privileges` (`list(string)`)
 - Optional inputs:
@@ -52,7 +54,7 @@
 ## Behavior / Data Flow
 
 - The caller provides a stable-keyed `schemas` map.
-- The module creates one `databricks_schema` resource per schema entry.
+- The module creates one `databricks_schema` resource per schema entry and passes through optional schema `properties`.
 - When a schema declares grants, the module flattens `(schema_key, principal, privilege)` tuples, rejects duplicates, regroups privileges by principal, and creates one authoritative `databricks_grants` resource for that schema.
 - The output map preserves the caller-defined stable keys and returns the created schema identity through `full_name`.
 
@@ -68,6 +70,7 @@
 - Module-level validation must reject:
   - blank `catalog_name`
   - blank `schema_name`
+  - blank schema property keys
   - blank grant principals
   - empty privilege lists
   - invalid privilege names

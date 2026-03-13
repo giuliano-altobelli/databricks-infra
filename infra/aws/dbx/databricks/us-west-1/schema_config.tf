@@ -3,28 +3,37 @@
 # =============================================================================
 
 locals {
-  standard_governed_schema_names = ["raw", "base", "staging", "final", "uat"]
-
-  governed_catalogs_for_schemas = {
-    for catalog_key, catalog in local.catalogs :
-    catalog_key => catalog
-    if catalog.catalog_kind == "governed"
+  governed_schema_config = {
+    # Add catalog-specific governed schemas or replace template-derived schema
+    # grants here. This file remains the source of truth for created schemas.
+    #
+    # salesforce_revenue = {
+    #   raw = {
+    #     grants = [
+    #       {
+    #         principal  = local.identity_groups.platform_admins.display_name
+    #         privileges = ["ALL_PRIVILEGES"]
+    #       }
+    #     ]
+    #   }
+    #
+    #   quarantine = {
+    #     comment = "Catalog-specific governed schema outside the reusable template."
+    #   }
+    # }
   }
 
-  normalized_catalog_types_config = {
-    for catalog_type_key, catalog_type in local.catalog_types_config :
-    catalog_type_key => {
-      managed_volumes = {
-        for schema_name, volumes in try(catalog_type.managed_volumes, {}) :
-        schema_name => {
-          for volume_key, volume in volumes :
-          volume_key => {
-            name    = trimspace(try(volume.name, volume_key))
-            comment = try(volume.comment, null)
-            owner   = try(volume.owner, null)
-            grants  = try(volume.grants, null)
-          }
+  normalized_governed_schema_config = {
+    for catalog_key, schemas in local.governed_schema_config :
+    catalog_key => {
+      for raw_schema_name, schema in schemas :
+      trimspace(raw_schema_name) => {
+        comment = try(schema.comment, null)
+        properties = try(schema.properties, null) == null ? null : {
+          for property_key, property_value in schema.properties :
+          trimspace(property_key) => property_value
         }
+        grants = try(schema.grants, null)
       }
     }
   }
@@ -34,7 +43,7 @@ locals {
     catalog_key => {
       managed_volumes = {
         for schema_name, volumes in try(catalog.managed_volume_overrides, {}) :
-        schema_name => {
+        trimspace(schema_name) => {
           for volume_key, volume in volumes :
           volume_key => {
             name    = trimspace(try(volume.name, volume_key))
@@ -50,6 +59,27 @@ locals {
   effective_governed_schema_config = {
     for catalog_key, catalog in local.governed_catalogs_for_schemas :
     catalog_key => {
+      schemas = {
+        for schema_name in distinct(concat(
+          keys(local.governed_catalog_schema_templates[catalog_key].schemas),
+          keys(try(local.normalized_governed_schema_config[catalog_key], {}))
+        )) :
+        schema_name => {
+          comment = try(
+            local.normalized_governed_schema_config[catalog_key][schema_name].comment,
+            try(local.governed_catalog_schema_templates[catalog_key].schemas[schema_name].comment, null)
+          )
+          properties = length(merge(
+            try(local.governed_catalog_schema_templates[catalog_key].schemas[schema_name].properties, {}),
+            try(local.normalized_governed_schema_config[catalog_key][schema_name].properties, {})
+            )) == 0 ? null : merge(
+            try(local.governed_catalog_schema_templates[catalog_key].schemas[schema_name].properties, {}),
+            try(local.normalized_governed_schema_config[catalog_key][schema_name].properties, {})
+          )
+          grants = try(local.normalized_governed_schema_config[catalog_key][schema_name].grants, null)
+        }
+      }
+
       managed_volumes = {
         for schema_name in distinct(concat(
           keys(try(local.normalized_catalog_types_config[catalog.catalog_type].managed_volumes, {})),
@@ -74,12 +104,14 @@ locals {
   governed_schemas = {
     for record in flatten([
       for catalog_key, catalog in local.governed_catalogs_for_schemas : [
-        for schema_name in local.standard_governed_schema_names : {
+        for schema_name, schema in local.effective_governed_schema_config[catalog_key].schemas : {
           key = "${catalog_key}:${schema_name}"
           value = {
             catalog_name = module.governed_catalogs[catalog_key].catalog_name
             schema_name  = schema_name
-            grants = concat(
+            comment      = try(schema.comment, null)
+            properties   = try(schema.properties, null)
+            grants = try(schema.grants, null) != null ? schema.grants : concat(
               [
                 {
                   principal  = catalog.catalog_admin_principal
@@ -133,9 +165,15 @@ locals {
     ]) : record.key => record.value
   }
 
-  governed_managed_volume_schema_names = distinct(flatten([
-    for catalog in values(local.effective_governed_schema_config) :
-    keys(catalog.managed_volumes)
+  effective_governed_schema_identities = distinct(flatten([
+    for catalog_key, catalog in local.effective_governed_schema_config : [
+      for schema_name in keys(catalog.schemas) :
+      format(
+        "%s.%s",
+        lower(trimspace(module.governed_catalogs[catalog_key].catalog_name)),
+        lower(trimspace(schema_name))
+      )
+    ]
   ]))
 
   managed_volume_identity_keys = [
@@ -156,13 +194,46 @@ locals {
   ])
 }
 
+check "governed_schema_names" {
+  assert {
+    condition = alltrue(flatten([
+      for catalog in values(local.effective_governed_schema_config) : [
+        for schema_name in keys(catalog.schemas) :
+        schema_name != ""
+      ]
+    ]))
+    error_message = "Governed schema names must resolve to non-empty values."
+  }
+}
+
+check "governed_schema_property_keys" {
+  assert {
+    condition = alltrue(flatten([
+      for catalog in values(local.effective_governed_schema_config) : [
+        for schema in values(catalog.schemas) : [
+          for property_key in try(schema.properties, null) == null ? [] : keys(schema.properties) :
+          trimspace(property_key) != ""
+        ]
+      ]
+    ]))
+    error_message = "Governed schema property keys must be non-empty."
+  }
+}
+
 check "governed_managed_volume_schema_names" {
   assert {
     condition = alltrue([
-      for schema_name in local.governed_managed_volume_schema_names :
-      contains(local.standard_governed_schema_names, schema_name)
+      for volume in values(local.governed_managed_volumes) :
+      contains(
+        local.effective_governed_schema_identities,
+        format(
+          "%s.%s",
+          lower(trimspace(volume.catalog_name)),
+          lower(trimspace(volume.schema_name))
+        )
+      )
     ])
-    error_message = "Managed volumes may be declared only under raw, base, staging, final, or uat."
+    error_message = "Managed volumes may be declared only under schemas defined in the effective governed schema configuration."
   }
 }
 

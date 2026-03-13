@@ -10,6 +10,7 @@ variable "schemas" {
     catalog_name = string
     schema_name  = string
     comment      = optional(string)
+    properties   = optional(map(string))
     grants = optional(list(object({
       principal  = string
       privileges = list(string)
@@ -23,6 +24,16 @@ variable "schemas" {
       trimspace(schema.schema_name) != ""
     ])
     error_message = "Each schema must declare non-empty catalog_name and schema_name values."
+  }
+
+  validation {
+    condition = !var.enabled || alltrue(flatten([
+      for schema in values(var.schemas) : [
+        for property_key in try(keys(schema.properties), []) :
+        trimspace(property_key) != ""
+      ]
+    ]))
+    error_message = "Each schema property key must be non-empty."
   }
 
   validation {

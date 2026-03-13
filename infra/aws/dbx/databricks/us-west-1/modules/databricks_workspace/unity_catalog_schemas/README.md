@@ -1,6 +1,6 @@
 # Unity Catalog Schemas Module
 
-This module manages workspace-scoped Databricks Unity Catalog schemas. It creates one schema per stable caller-defined key and can manage authoritative schema grants when `grants` are declared.
+This module manages workspace-scoped Databricks Unity Catalog schemas. It creates one schema per stable caller-defined key, can pass through optional schema `properties`, and can manage authoritative schema grants when `grants` are declared.
 
 ## Usage
 
@@ -16,6 +16,9 @@ module "unity_catalog_schemas" {
     "salesforce_revenue:raw" = {
       catalog_name = "prod_salesforce_revenue"
       schema_name  = "raw"
+      properties = {
+        classification = "restricted"
+      }
       grants = [
         {
           principal  = "Platform Admins"
@@ -40,6 +43,10 @@ module "unity_catalog_schemas" {
 ## Grant Ownership
 
 When `grants` are declared for a module-managed schema, the module uses `databricks_grants`, which is authoritative for that schema. Out-of-band schema grants are not preserved.
+
+## Schema Properties
+
+When `properties` are declared, the module passes them directly to `databricks_schema`. Property keys must be non-empty.
 
 ## Outputs
 

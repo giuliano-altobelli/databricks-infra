@@ -99,11 +99,15 @@ After the credential exists:
 
 ## Governed Unity Catalog Schemas And Managed Volumes
 
-Governed Unity Catalog schemas and optional governed managed volumes are derived in `schema_config.tf` from `catalogs_config.tf` and `catalog_types_config.tf`.
+Governed Unity Catalog schemas and optional governed managed volumes are derived in `schema_config.tf` from `catalogs_config.tf`, `catalog_schema_config.tf`, and `catalog_types_config.tf`.
 
-- Each governed catalog receives the standard schema set: `raw`, `base`, `staging`, `final`, and `uat`.
+- Reusable governed schema templates now live under `schemas` inside `local.catalog_types_config`.
+- The checked-in `standard_governed` catalog type resolves to `raw`, `base`, `staging`, `final`, and `uat`.
 - This rollout creates governed schemas only. It does not create `personal.<user_key>` schemas.
+- Template schema entries can currently declare optional `comment` and `properties`.
 - Default schema grants are derived from `catalogs_config.tf`: catalog admins receive `ALL_PRIVILEGES`, and catalog readers receive `USE_SCHEMA`.
+- `catalog_schema_config.tf` resolves the reusable schema template for each governed catalog from its `catalog_type`.
+- `schema_config.tf` remains the source of truth for created governed schemas and is where catalog-specific schema additions, property overrides, or schema-level grant replacements belong.
 - Optional reusable managed volumes are declared under `managed_volumes` inside `local.catalog_types_config`.
 - Catalog-specific managed-volume additions or replacements are declared under `managed_volume_overrides` on each governed catalog entry in `catalogs_config.tf`.
 - Governed managed volumes are flattened into the existing `unity_catalog_volumes` module as `MANAGED` volumes.
