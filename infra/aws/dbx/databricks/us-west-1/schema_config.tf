@@ -6,13 +6,21 @@ locals {
   governed_schema_config = {
     # Add catalog-specific governed schemas or replace template-derived schema
     # grants here. This file remains the source of truth for created schemas.
+    # Schema grants are authoritative allow-lists, so excluding a principal
+    # from one schema means replacing that schema's grant list without it.
     #
     # salesforce_revenue = {
+    #   # Example: keep the default reader group on base/staging/final/uat, but
+    #   # exclude the Finance Readers group from raw by replacing raw.grants.
     #   raw = {
     #     grants = [
     #       {
     #         principal  = local.identity_groups.platform_admins.display_name
     #         privileges = ["ALL_PRIVILEGES"]
+    #       }
+    #       {
+    #         principal  = local.identity_groups.revenue_engineers.display_name
+    #         privileges = ["USE_SCHEMA"]
     #       }
     #     ]
     #   }

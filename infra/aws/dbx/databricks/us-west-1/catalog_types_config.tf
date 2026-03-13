@@ -9,7 +9,13 @@ locals {
     # resources. Rename with care.
     standard_governed = {
       schemas = {
-        raw     = {}
+        raw = {
+          comment = "Landing zone for raw source-aligned data."
+          properties = {
+            purpose        = "Landing zone for raw source-aligned data."
+            classification = "restricted"
+          }
+        }
         base    = {}
         staging = {}
         final   = {}

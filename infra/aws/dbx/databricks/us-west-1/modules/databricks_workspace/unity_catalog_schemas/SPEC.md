@@ -55,6 +55,8 @@
 
 - The caller provides a stable-keyed `schemas` map.
 - The module creates one `databricks_schema` resource per schema entry and passes through optional schema `properties`.
+- In the governed root configuration, schema grants are typically derived upstream from catalog-level identity inputs, so catalog admins and catalog readers receive schema access by default unless a schema entry declares its own `grants`.
+- When a schema entry declares `grants`, that list is the full authoritative allow-list for that schema in Terraform; it replaces any upstream-derived default grants rather than merging with them.
 - When a schema declares grants, the module flattens `(schema_key, principal, privilege)` tuples, rejects duplicates, regroups privileges by principal, and creates one authoritative `databricks_grants` resource for that schema.
 - The output map preserves the caller-defined stable keys and returns the created schema identity through `full_name`.
 
@@ -62,6 +64,7 @@
 
 - Stable caller keys are the Terraform identity for managed schemas. Renaming a key changes the Terraform address even if the Databricks schema name stays the same.
 - Grants are authoritative when declared. Out-of-band schema grants on managed schemas are not preserved.
+- Because grants are authoritative, omitting a principal from a schema's explicit `grants` removes that schema access through this Terraform-managed path; this is how schema-specific exclusions are modeled.
 - Supported schema grant privileges are limited to `ALL_PRIVILEGES` and `USE_SCHEMA`.
 - Expected runtime failures outside static validation include missing catalogs, missing metastore assignment, or provider/runtime rejection of an otherwise syntactically valid request.
 
