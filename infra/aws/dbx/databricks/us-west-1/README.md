@@ -42,6 +42,19 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
 - This layer manages only service principal creation, optional workspace assignment, and workspace entitlements.
 - Credentials, Unity Catalog grants, warehouse permissions, group membership, and account roles remain outside this file.
 
+## SQL Warehouses
+
+`sql_warehouses.tf` is the root catalog for Terraform-managed Databricks SQL warehouses.
+
+- The checked-in example demonstrates one workspace-scoped warehouse keyed as `analytics_ci`.
+- The file is intentionally disabled by default on `main` with `local.sql_warehouses_enabled = false`.
+- Stable map keys are Terraform addresses and downstream lookup keys for `module.sql_warehouses` outputs.
+- Warehouse ACLs are authoritative because the module manages one `databricks_permissions` resource per warehouse.
+- Groups, users, and service principals referenced in `permissions` must resolve in the target workspace by the time Terraform reaches the SQL warehouse resources, whether they already existed or were created earlier in the same graph through explicit dependencies.
+- The checked-in service-principal ACL example activates only when `local.service_principals_enabled = true`; replace the example warehouse definition before enabling live compute.
+- This layer manages only SQL warehouse creation plus warehouse ACLs.
+- Identity creation, entitlements, workspace assignments, Unity Catalog grants, jobs, dashboards, and queries remain outside this file.
+
 ## Governed Catalog Creation
 
 The preferred entrypoint for new governed catalog work is `catalogs_config.tf`.
