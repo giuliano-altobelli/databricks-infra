@@ -22,11 +22,12 @@ locals {
   entitlement_principals = {
     for principal_key, principal in local.enabled_service_principals :
     principal_key => {
-      allow_cluster_create       = coalesce(try(principal.entitlements.allow_cluster_create, null), false)
-      allow_instance_pool_create = coalesce(try(principal.entitlements.allow_instance_pool_create, null), false)
-      databricks_sql_access      = coalesce(try(principal.entitlements.databricks_sql_access, null), false)
-      workspace_access           = coalesce(try(principal.entitlements.workspace_access, null), false)
-      workspace_consume          = coalesce(try(principal.entitlements.workspace_consume, null), false) ? true : null
+      allow_cluster_create       = try(principal.entitlements.allow_cluster_create, null)
+      allow_instance_pool_create = try(principal.entitlements.allow_instance_pool_create, null)
+      databricks_sql_access      = try(principal.entitlements.databricks_sql_access, null)
+      workspace_access           = try(principal.entitlements.workspace_access, null)
+      # The provider still conflicts when workspace_consume = false is sent.
+      workspace_consume = try(principal.entitlements.workspace_consume, null) == true ? true : null
     }
     if principal.entitlements != null
   }
@@ -37,6 +38,16 @@ resource "databricks_service_principal" "account" {
   for_each = local.account_service_principals
 
   display_name = each.value.display_name
+
+  lifecycle {
+    ignore_changes = [
+      allow_cluster_create,
+      allow_instance_pool_create,
+      databricks_sql_access,
+      workspace_access,
+      workspace_consume,
+    ]
+  }
 }
 
 resource "databricks_service_principal" "workspace" {
@@ -44,6 +55,16 @@ resource "databricks_service_principal" "workspace" {
   for_each = local.workspace_service_principals
 
   display_name = each.value.display_name
+
+  lifecycle {
+    ignore_changes = [
+      allow_cluster_create,
+      allow_instance_pool_create,
+      databricks_sql_access,
+      workspace_access,
+      workspace_consume,
+    ]
+  }
 }
 
 locals {

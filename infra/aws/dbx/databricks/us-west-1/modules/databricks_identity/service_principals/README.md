@@ -47,8 +47,16 @@ module "service_principals" {
 - Account-scoped entitlements require `workspace_assignment.enabled = true`.
 - `workspace_assignment.permissions` must be non-empty when workspace assignment is enabled.
 - Workspace-scoped principals must not request workspace assignment.
-- Entitlements are authoritative when the `entitlements` object exists, and omitted entitlement fields are treated as effective `false`.
-- The Databricks provider currently conflicts when `workspace_consume = false` is sent alongside other entitlement fields, so the module sends `workspace_consume` only when it is `true`; clearing a prior `workspace_consume` grant therefore depends on provider handling of omitted values.
+- Deprecated inline entitlement attributes on `databricks_service_principal` are ignored for drift so `databricks_entitlements` stays the only entitlement writer.
+- Entitlements are authoritative when the `entitlements` object exists, but omitted entitlement fields stay unset while explicit `false` values remain active clears.
+- The Databricks provider currently conflicts when `workspace_consume = false` is sent alongside other entitlement fields, so the module sends `workspace_consume` only when it is `true`; omitted or explicit `false` values therefore rely on provider handling of the omitted field.
+- To leave `databricks_sql_access` untouched while explicitly clearing `workspace_access`, omit the first field and set only:
+
+```hcl
+entitlements = {
+  workspace_access = false
+}
+```
 - `enabled = false` returns empty maps for every output.
 
 ## Out Of Scope

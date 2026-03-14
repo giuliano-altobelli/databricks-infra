@@ -40,6 +40,7 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
 - The file is intentionally disabled by default on `main` with `local.service_principals_enabled = false`.
 - Replace the example display names with real service principal names before setting `service_principals_enabled = true`.
 - This layer manages only service principal creation, optional workspace assignment, and workspace entitlements.
+- To leave an entitlement untouched, omit that field; to request a clear, set it explicitly to `false` (for example, `entitlements = { workspace_access = false }`).
 - Credentials, Unity Catalog grants, warehouse permissions, group membership, and account roles remain outside this file.
 
 ## SQL Warehouses

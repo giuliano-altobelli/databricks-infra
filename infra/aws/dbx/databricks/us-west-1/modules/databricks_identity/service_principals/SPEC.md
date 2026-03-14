@@ -18,6 +18,7 @@
   - Group membership
   - Account roles
   - Unity Catalog grants
+  - Root-level Unity Catalog access policy that may consume this module's outputs to grant access only to enabled governed catalogs, governed schemas, and governed managed volumes
   - Warehouse permissions
   - Multi-workspace fan-out
 
@@ -46,6 +47,7 @@
   - `workspace_assignment_ids`
   - `entitlements_ids`
   - When `enabled = false`, every output is an empty map.
+  - `application_ids` may be consumed by separate root-level permission entrypoints, but that downstream access remains outside this module contract.
 
 ## Provider Context
 
@@ -60,8 +62,13 @@
 - Account-scoped principals are created on `databricks.mws`.
 - Workspace-scoped principals are created on `databricks.workspace`.
 - Account-scoped principals may optionally receive `databricks_mws_permission_assignment` into exactly one workspace when `workspace_assignment.enabled = true`.
-- Principals may optionally receive authoritative `databricks_entitlements` when the `entitlements` object is present, with omitted entitlement fields treated as effective `false`.
+- Both `databricks_service_principal` resource sets ignore the deprecated inline entitlement attributes so `databricks_entitlements` remains the only entitlement writer.
+- Principals may optionally receive authoritative `databricks_entitlements` when the `entitlements` object is present, with omitted entitlement fields left unset and explicit `false` values retained as clears.
 - Account-scoped principals may manage entitlements only after they are assigned into the target workspace.
+- This module does not grant Unity Catalog access by itself. If a separate root-level Unity Catalog policy later consumes `application_ids`, the resulting access is still limited by that downstream policy and does not imply:
+  - access to the `personal` catalog
+  - access to non-governed catalogs
+  - table, view, function, model, or other object-level privileges beyond what that downstream policy manages
 
 ## Constraints and Failure Modes
 
@@ -73,7 +80,7 @@
 - Workspace-scoped principals must not request workspace assignment.
 - Account-scoped principals must not request entitlements unless workspace assignment is enabled.
 - Workspace assignment requires a usable `workspace_id`.
-- Due to current Databricks provider argument conflicts, `workspace_consume` is sent only when its effective value is `true`; clearing a previously granted `workspace_consume` entitlement relies on provider handling of omitted values.
+- Due to current Databricks provider argument conflicts, `workspace_consume` is sent only when its effective value is `true`; omitted or explicit `false` values are both sent as `null`, so clearing a previously granted `workspace_consume` entitlement still relies on provider handling of omitted values.
 - Runtime failures may still occur when:
   - the caller lacks sufficient account-level privileges on `databricks.mws`
   - the caller lacks sufficient workspace-level privileges on `databricks.workspace`
