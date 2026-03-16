@@ -66,8 +66,10 @@ The preferred entrypoint for new governed catalog work is `catalogs_config.tf`.
 - Each governed catalog entry can now declare `enabled`, `display_name`, `catalog_type`, `catalog_admin_group`, `reader_group`, and `managed_volume_overrides` in addition to the existing naming and `workspace_ids` fields.
 - `catalog_admin_group` and `reader_group` use keys from `local.identity_groups` in `identify.tf`, not raw Databricks display names.
 - `catalog_type` must reference a key in `local.catalog_types_config`. Governed catalogs default to `catalog_type = "standard_governed"`.
+- A governed catalog type may intentionally declare `schemas = {}`. This is the supported pattern for the default catalog named `main`, which should set `catalog_name = "main"` explicitly in `local.governed_catalog_domains`.
 - `managed_volume_overrides` is optional and can add or replace managed-volume definitions from the referenced catalog type without duplicating the whole template.
 - When an override matches an existing template-managed volume, the override replaces only the attributes it sets. If it sets `grants`, that override replaces the template grant list for that volume.
+- Schema-less catalog types must also keep `managed_volumes = {}` because managed volumes must belong to declared schema keys.
 - Defaults preserve the prior behavior: `enabled = true`, `display_name = catalog_name`, `catalog_admin_group = "platform_admins"`, `reader_group = []`, and no managed volumes.
 - Disabled catalogs create no resources and are omitted from the root `output.catalogs` map.
 - Governed catalog grants remain catalog-level only in this rollout: admins receive `ALL_PRIVILEGES`, and reader groups receive `USE_CATALOG`.
@@ -104,12 +106,14 @@ Governed Unity Catalog schemas and optional governed managed volumes are derived
 
 - Reusable governed schema templates now live under `schemas` inside `local.catalog_types_config`.
 - The checked-in `standard_governed` catalog type resolves to `raw`, `base`, `staging`, `final`, and `uat`.
+- Catalog types may intentionally declare `schemas = {}` for schema-less governed catalogs such as the default `main` catalog.
 - This rollout creates governed schemas only. It does not create `personal.<user_key>` schemas.
 - Template schema entries can currently declare optional `comment` and `properties`.
 - Default schema grants are derived from `catalogs_config.tf`: catalog admins receive `ALL_PRIVILEGES`, and catalog readers receive `USE_SCHEMA`.
 - `catalog_schema_config.tf` resolves the reusable schema template for each governed catalog from its `catalog_type`.
 - `schema_config.tf` remains the source of truth for created governed schemas and is where catalog-specific schema additions, property overrides, or schema-level grant replacements belong.
 - Optional reusable managed volumes are declared under `managed_volumes` inside `local.catalog_types_config`.
+- Managed-volume template schema keys must match schema keys declared in the same catalog type, so schema-less catalog types cannot declare managed volumes.
 - Catalog-specific managed-volume additions or replacements are declared under `managed_volume_overrides` on each governed catalog entry in `catalogs_config.tf`.
 - Governed managed volumes are flattened into the existing `unity_catalog_volumes` module as `MANAGED` volumes.
 - Catalog type keys plus managed-volume map keys are part of the stable Terraform identity for derived managed volumes. Renaming them changes Terraform addresses even if the Databricks volume name stays the same.

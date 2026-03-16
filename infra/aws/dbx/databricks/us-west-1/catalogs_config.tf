@@ -42,6 +42,16 @@ locals {
     #   catalog_admin_group = "platform_admins"
     #   reader_group        = []
     # }
+    # main = {
+    #   enabled             = true
+    #   display_name        = "Main"
+    #   catalog_name        = "main"
+    #   source              = "main"
+    #   business_area       = ""
+    #   catalog_type        = "main_empty" # Example schema-less type with schemas = {}
+    #   catalog_admin_group = "platform_admins"
+    #   reader_group        = []
+    # }
   }
 
   normalized_governed_catalog_domains = {

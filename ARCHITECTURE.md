@@ -9,7 +9,8 @@ This repository currently targets a **single Databricks workspace**. Unity Catal
 - **Governed domain catalogs:**
   - `prod_<source>_<business_area>` when `business_area` is present
   - `prod_<source>` when `business_area` is empty
-  - Schemas: `raw`, `base`, `staging`, `final`, plus `uat`
+  - Standard schemas: `raw`, `base`, `staging`, `final`, plus `uat`
+  - Exception: the default catalog `main` may be managed on the governed path with no schemas
 - **Personal development catalog:** `personal`
   - Schemas: `personal.<user_key>` for each user present in the workspace-level `okta-databricks-users` group
   - `<user_key>` is derived from the user's normalized email local part (example: `jane.doe@company.com` -> `jane_doe`)
@@ -19,6 +20,7 @@ Examples:
 - Prod object: `prod_salesforce_revenue.final.customer_dim`
 - Prod object without business area: `prod_hubspot.final.company_dim`
 - Shareable UAT object: `prod_salesforce_revenue.uat.customer_dim_candidate`
+- Default schema-less governed catalog: `main`
 - Personal build artifact: `personal.jane_doe.customer_dim_candidate`
 
 ### Access model (intent)
@@ -29,6 +31,7 @@ Examples:
 - Domain readers can read both:
   - governed `prod_*` production-layer schemas
   - governed `prod_*` `uat` schemas
+- The governed-path `main` catalog is catalog-level only in this pattern; it intentionally has no schemas.
 - The workspace default namespace remains unchanged for now; future recommendation is to set it to `personal` to reduce accidental writes into governed catalogs.
 
 Detailed design: `docs/design-docs/unity-catalog.md`

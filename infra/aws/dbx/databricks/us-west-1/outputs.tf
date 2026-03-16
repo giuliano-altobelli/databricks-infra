@@ -24,4 +24,9 @@ output "catalogs" {
       kms_key_arn                              = module.governed_catalogs[catalog_key].kms_key_arn
     }
   }
+
+  precondition {
+    condition     = length(local.invalid_catalog_type_managed_volume_schema_keys) == 0
+    error_message = "Catalog type managed volumes must be declared only under schema keys defined in the same catalog type: ${join(", ", local.invalid_catalog_type_managed_volume_schema_keys)}."
+  }
 }
