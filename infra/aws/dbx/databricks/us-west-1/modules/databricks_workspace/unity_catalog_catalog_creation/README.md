@@ -49,6 +49,7 @@ module "revenue_catalog" {
 - `catalog_admin_principal` receives `ALL_PRIVILEGES`.
 - Each principal in `catalog_reader_principals` receives `USE_CATALOG`.
 - The legacy isolated caller preserves its existing `databricks_grant` state shape and additive behavior for the bootstrap/admin principal, so out-of-band grants remain legacy-compatible on that path.
+- Legacy/default-namespace mode (`set_default_namespace = true`) intentionally manages only the admin bootstrap grant. In that mode, `catalog_reader_principals` must be empty.
 - The governed root caller defaults this principal to `Platform Admins`. The legacy isolated caller remains compatible by passing its existing admin principal instead.
 
 ## Outputs

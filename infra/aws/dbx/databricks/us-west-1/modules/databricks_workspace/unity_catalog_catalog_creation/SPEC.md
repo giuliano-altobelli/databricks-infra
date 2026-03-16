@@ -124,6 +124,7 @@
   - blank `catalog_name` when enabled
   - blank `catalog_admin_principal` when enabled
   - blank or duplicate `catalog_reader_principals` entries when enabled
+  - non-empty `catalog_reader_principals` when `set_default_namespace = true`
   - blank or non-numeric `workspace_id` when enabled
   - blank or non-numeric entries in `workspace_ids`
   - duplicate workspace-binding tuples

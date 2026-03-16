@@ -63,6 +63,11 @@ variable "catalog_reader_principals" {
   default     = []
 
   validation {
+    condition     = !var.enabled || !var.set_default_namespace || length(var.catalog_reader_principals) == 0
+    error_message = "catalog_reader_principals must be empty when set_default_namespace is true."
+  }
+
+  validation {
     condition = !var.enabled || alltrue([
       for principal in var.catalog_reader_principals :
       trimspace(principal) != ""

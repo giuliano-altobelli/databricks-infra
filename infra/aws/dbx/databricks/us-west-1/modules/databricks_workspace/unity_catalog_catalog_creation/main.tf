@@ -10,14 +10,13 @@ locals {
   legacy_name_compat = var.catalog_name == replace("${var.resource_prefix}-catalog-${var.workspace_id}", "-", "_")
   resource_name_base = local.legacy_name_compat ? local.aws_safe_catalog_suffix : "${var.resource_prefix}-${local.aws_safe_catalog_suffix}-${var.workspace_id}"
 
-  uc_iam_role                = local.resource_name_base
-  catalog_bucket_name        = local.resource_name_base
-  storage_credential_name    = "${local.resource_name_base}-storage-credential"
-  external_location_name     = "${local.resource_name_base}-external-location"
-  iam_policy_name            = local.legacy_name_compat ? "${var.resource_prefix}-catalog-policy-${var.workspace_id}" : "${local.resource_name_base}-policy"
-  iam_policy_attachment_name = local.legacy_name_compat ? "unity_catalog_policy_attach" : "${local.resource_name_base}-policy-attach"
-  kms_key_name               = local.legacy_name_compat ? "${var.resource_prefix}-catalog-storage-${var.workspace_id}-key" : "${local.resource_name_base}-storage-key"
-  kms_key_alias_name         = "alias/${local.kms_key_name}"
+  uc_iam_role             = local.resource_name_base
+  catalog_bucket_name     = local.resource_name_base
+  storage_credential_name = "${local.resource_name_base}-storage-credential"
+  external_location_name  = "${local.resource_name_base}-external-location"
+  iam_policy_name         = local.legacy_name_compat ? "${var.resource_prefix}-catalog-policy-${var.workspace_id}" : "${local.resource_name_base}-policy"
+  kms_key_name            = local.legacy_name_compat ? "${var.resource_prefix}-catalog-storage-${var.workspace_id}-key" : "${local.resource_name_base}-storage-key"
+  kms_key_alias_name      = "alias/${local.kms_key_name}"
 
   normalized_catalog_workspace_ids = [
     for workspace_id in concat([var.workspace_id], var.workspace_ids) : trimspace(workspace_id)
@@ -206,10 +205,9 @@ resource "aws_iam_role" "unity_catalog" {
   }
 }
 
-resource "aws_iam_policy_attachment" "unity_catalog_attach" {
+resource "aws_iam_role_policy_attachment" "unity_catalog_attach" {
   count      = var.enabled ? 1 : 0
-  name       = local.iam_policy_attachment_name
-  roles      = [aws_iam_role.unity_catalog[0].name]
+  role       = aws_iam_role.unity_catalog[0].name
   policy_arn = aws_iam_policy.unity_catalog[0].arn
 }
 
@@ -268,7 +266,7 @@ resource "databricks_external_location" "workspace_catalog_external_location" {
   isolation_mode  = "ISOLATION_MODE_ISOLATED"
 
   depends_on = [
-    aws_iam_policy_attachment.unity_catalog_attach,
+    aws_iam_role_policy_attachment.unity_catalog_attach,
     time_sleep.wait_60_seconds,
   ]
 
@@ -416,9 +414,12 @@ moved {
   to   = aws_iam_role.unity_catalog[0]
 }
 
-moved {
+removed {
   from = aws_iam_policy_attachment.unity_catalog_attach
-  to   = aws_iam_policy_attachment.unity_catalog_attach[0]
+
+  lifecycle {
+    destroy = false
+  }
 }
 
 moved {
