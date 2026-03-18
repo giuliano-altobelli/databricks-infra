@@ -50,7 +50,7 @@ locals {
 }
 
 module "users_groups" {
-  source = "./modules/databricks_account/users_groups"
+  source = "./modules/databricks_identity/users_groups"
 
   providers = {
     databricks.mws       = databricks.mws
