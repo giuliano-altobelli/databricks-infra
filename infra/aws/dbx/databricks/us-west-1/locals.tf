@@ -23,6 +23,6 @@ locals {
   enable_restrictive_root_bucket            = local.enable_enterprise_infra
   enable_disable_legacy_settings            = local.is_enterprise
 
-  effective_uc_catalog_mode = var.uc_catalog_mode != null ? var.uc_catalog_mode : (local.enable_enterprise_infra ? "isolated" : "existing")
-  catalog_name              = local.effective_uc_catalog_mode == "isolated" ? try(module.unity_catalog_catalog_creation[0].catalog_name, null) : var.uc_existing_catalog_name
+  # Temporary compatibility alias for disabled single-catalog consumers.
+  catalog_name = try(module.governed_catalogs["personal"].catalog_name, null)
 }

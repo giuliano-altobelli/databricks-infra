@@ -1,7 +1,7 @@
 # =============================================================================
-# Premium Trial Quickstart (Existing Workspace)
+# Generic tfvars Reference (Historical Example)
 # =============================================================================
-# This is the default and recommended path for trial accounts.
+# Reference only. The sandbox branch is validated only with scenario2.sandbox-create-managed.tfvars.
 
 # -----------------------------------------------------------------------------
 # Required Core Variables
@@ -13,7 +13,7 @@ databricks_account_id  = "535f803e-200e-4ff7-985a-7673a0f53375"
 resource_prefix        = "personal-infra"
 
 # -----------------------------------------------------------------------------
-# Workspace Selection (default: existing workspace)
+# Workspace Selection (reference: existing workspace)
 # -----------------------------------------------------------------------------
 pricing_tier           = "PREMIUM"
 workspace_source       = "existing"
@@ -23,18 +23,12 @@ existing_workspace_id   = "7474651824071073"
 # -----------------------------------------------------------------------------
 # Network Configuration
 # -----------------------------------------------------------------------------
-# managed  = Databricks-managed networking (recommended for trial)
+# managed  = Databricks-managed networking
 # isolated = Customer-managed isolated networking
 # custom   = Reuse existing customer networking assets
 network_configuration = "managed"
 
-# -----------------------------------------------------------------------------
-# Unity Catalog Configuration (always enabled)
-# -----------------------------------------------------------------------------
-uc_catalog_mode          = "existing"
-uc_existing_catalog_name = "main"
-
-# For Premium trial, prefer using an existing metastore.
+# For reference, this example uses an existing metastore.
 metastore_exists = true
 
 # Required only when metastore_exists = false.
@@ -65,7 +59,6 @@ databricks_gov_shard = null
 # existing_workspace_host = null
 # existing_workspace_id   = null
 # network_configuration   = "managed"
-# uc_catalog_mode         = null
 
 # -----------------------------------------------------------------------------
 # Upgrade to Enterprise SRA (optional)
@@ -73,7 +66,6 @@ databricks_gov_shard = null
 # pricing_tier         = "ENTERPRISE"
 # workspace_source     = "create"
 # network_configuration = "isolated"
-# uc_catalog_mode      = "isolated"
 # enable_audit_log_delivery = true
 
 # Isolated network inputs (required when network_configuration = "isolated")

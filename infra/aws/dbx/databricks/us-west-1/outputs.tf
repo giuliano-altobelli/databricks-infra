@@ -3,7 +3,7 @@ output "workspace_host" {
 }
 
 output "catalog_name" {
-  description = "Name of the catalog created for the workspace"
+  description = "Compatibility alias for the sandbox personal catalog. Use output.catalogs for the authoritative catalog set."
   value       = local.catalog_name
 }
 

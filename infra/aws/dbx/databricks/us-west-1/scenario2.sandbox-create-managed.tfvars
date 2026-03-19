@@ -11,9 +11,7 @@ existing_workspace_host = null
 existing_workspace_id   = null
 network_configuration   = "managed"
 
-uc_catalog_mode          = "isolated"
-uc_existing_catalog_name = "sandbox_do_not_use"
-metastore_exists         = true
+metastore_exists = true
 
 enable_audit_log_delivery          = false
 audit_log_delivery_exists          = false

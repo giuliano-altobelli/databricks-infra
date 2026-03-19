@@ -106,9 +106,7 @@ locals {
   }
 
   governed_catalog_names              = [for catalog in values(local.catalogs) : catalog.catalog_name]
-  catalog_names                       = [for catalog in values(local.catalogs) : catalog.catalog_name]
   catalog_aws_safe_suffixes           = [for catalog in values(local.catalogs) : catalog.aws_safe_catalog_suffix]
-  legacy_isolated_catalog_name        = replace("${var.resource_prefix}-catalog-${local.workspace_id}", "-", "_")
   duplicate_governed_catalog_names    = length(local.governed_catalog_names) != length(distinct(local.governed_catalog_names))
   duplicate_catalog_aws_safe_suffixes = length(local.catalog_aws_safe_suffixes) != length(distinct(local.catalog_aws_safe_suffixes))
 }
@@ -212,22 +210,6 @@ check "governed_catalog_aws_suffix_uniqueness" {
   }
 }
 
-check "governed_catalog_existing_catalog_overlap" {
-  assert {
-    condition     = local.effective_uc_catalog_mode != "existing" || !contains(local.catalog_names, var.uc_existing_catalog_name)
-    error_message = "The governed catalog set must not overlap with var.uc_existing_catalog_name."
-  }
-}
-
-# In create-workspace flows the legacy isolated catalog name can remain unknown
-# until apply because workspace_id is created by Terraform in the same run.
-check "governed_catalog_legacy_isolated_overlap" {
-  assert {
-    condition     = local.effective_uc_catalog_mode != "isolated" || local.create_workspace || !contains(local.catalog_names, local.legacy_isolated_catalog_name)
-    error_message = "The governed catalog set must not overlap with the legacy isolated catalog name in existing-workspace flows."
-  }
-}
-
 module "governed_catalogs" {
   for_each = local.derived_governed_catalogs
   source   = "./modules/databricks_workspace/unity_catalog_catalog_creation"
@@ -253,5 +235,7 @@ module "governed_catalogs" {
   depends_on = [
     module.unity_catalog_metastore_assignment,
     module.users_groups,
+    data.databricks_current_metastore.workspace,
+    data.databricks_catalogs.workspace,
   ]
 }

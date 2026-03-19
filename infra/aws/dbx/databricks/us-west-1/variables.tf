@@ -228,24 +228,6 @@ variable "network_configuration" {
   }
 }
 
-variable "uc_catalog_mode" {
-  description = "Unity Catalog mode. Null means mode is inferred from pricing tier and workspace source."
-  type        = string
-  default     = null
-  nullable    = true
-
-  validation {
-    condition     = var.uc_catalog_mode == null || contains(["existing", "isolated"], var.uc_catalog_mode)
-    error_message = "Invalid uc_catalog_mode. Allowed values are: existing, isolated, or null."
-  }
-}
-
-variable "uc_existing_catalog_name" {
-  description = "Existing Unity Catalog name to use when uc_catalog_mode is existing."
-  type        = string
-  default     = "main"
-}
-
 variable "private_subnets_cidr" {
   description = "CIDR blocks for private subnets."
   type        = list(string)

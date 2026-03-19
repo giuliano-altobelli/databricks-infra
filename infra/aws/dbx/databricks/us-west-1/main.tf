@@ -140,29 +140,6 @@ module "log_delivery" {
 # Databricks Workspace Modules
 # =============================================================================
 
-# Creates a Workspace Isolated Catalog
-module "unity_catalog_catalog_creation" {
-  count  = local.effective_uc_catalog_mode == "isolated" ? 1 : 0
-  source = "./modules/databricks_workspace/unity_catalog_catalog_creation"
-  providers = {
-    databricks = databricks.created_workspace
-  }
-
-  aws_account_id          = var.aws_account_id
-  aws_iam_partition       = local.computed_aws_partition
-  aws_assume_partition    = local.assume_role_partition
-  unity_catalog_iam_arn   = local.unity_catalog_iam_arn
-  resource_prefix         = var.resource_prefix
-  catalog_name            = replace("${var.resource_prefix}-catalog-${local.workspace_id}", "-", "_")
-  cmk_admin_arn           = var.cmk_admin_arn == null ? "arn:${local.computed_aws_partition}:iam::${var.aws_account_id}:root" : var.cmk_admin_arn
-  workspace_id            = local.workspace_id
-  catalog_admin_principal = var.admin_user
-  workspace_ids           = []
-  set_default_namespace   = true
-
-  depends_on = [module.unity_catalog_metastore_assignment]
-}
-
 # Restrictive Root Bucket Policy
 module "restrictive_root_bucket" {
   count  = local.enable_restrictive_root_bucket ? 1 : 0
@@ -241,6 +218,4 @@ module "security_analysis_tool" {
   # Configuration Variables
   proxies           = {}
   run_on_serverless = true
-
-  depends_on = [module.unity_catalog_catalog_creation]
 }

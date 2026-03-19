@@ -33,14 +33,13 @@ check "sandbox_run_shape" {
     condition = (
       var.resource_prefix == "sandbox-infra" &&
       var.pricing_tier == "PREMIUM" &&
-      local.create_workspace &&
+      var.workspace_source == "create" &&
       var.network_configuration == "managed" &&
       var.metastore_exists &&
-      local.effective_uc_catalog_mode == "isolated" &&
       var.existing_workspace_host == null &&
       var.existing_workspace_id == null
     )
-    error_message = "Sandbox runs must use sandbox-infra, PREMIUM, workspace_source=create, managed networking, metastore_exists=true, uc_catalog_mode=isolated, and null existing workspace values."
+    error_message = "Sandbox runs must use sandbox-infra, PREMIUM, workspace_source=create, managed networking, metastore_exists=true, and null existing workspace values."
   }
 }
 

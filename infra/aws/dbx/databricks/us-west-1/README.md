@@ -8,7 +8,7 @@ This branch creates a second Databricks workspace on the shared account and shar
 - the existing Unity Catalog metastore
 - the existing Okta SCIM-provisioned users
 
-Everything else created by Terraform in this branch must be sandbox-owned.
+The sandbox branch never adopts existing Unity Catalog catalogs. Everything it creates must be sandbox-owned, and the only catalog names it manages are the sandbox-prefixed entries declared in `catalogs_config.tf`.
 
 Initialize Terraform against the dedicated sandbox state:
 
@@ -22,26 +22,37 @@ Before the first apply, confirm the sandbox state is empty:
 DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 state list
 ```
 
-Validate and create the sandbox plan:
+Bootstrap the workspace and metastore assignment first:
 
 ```bash
-DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 validate
-DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -var-file=scenario2.sandbox-create-managed.tfvars -out=sandbox-create.tfplan
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 apply \
+  -target=module.databricks_mws_workspace \
+  -target=module.unity_catalog_metastore_assignment \
+  -target=module.user_assignment \
+  -var-file=scenario2.sandbox-create-managed.tfvars
 ```
 
-Reject the plan if this command prints anything:
+Then run the full post-bootstrap sandbox plan:
 
 ```bash
-DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 show -no-color sandbox-create.tfplan | rg 'will be updated in-place|must be replaced|will be destroyed'
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan \
+  -var-file=scenario2.sandbox-create-managed.tfvars
 ```
 
-Apply only after manual review confirms the plan creates a new workspace and sandbox-prefixed duplicates only:
+This staged workflow is intentional:
+
+- the workspace ID must come from Terraform state
+- the collision check runs during `plan`
+- hardcoding `workspace_id` is intentionally unsupported
+
+If the post-bootstrap plan is correct, run the full rollout apply:
 
 ```bash
-DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 apply sandbox-create.tfplan
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 apply \
+  -var-file=scenario2.sandbox-create-managed.tfvars
 ```
 
-After apply, confirm the sandbox stack is converged:
+After the full rollout apply, confirm the sandbox stack is converged:
 
 ```bash
 DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -var-file=scenario2.sandbox-create-managed.tfvars
@@ -67,21 +78,16 @@ Reject the sandbox run immediately if any of the following are true:
 - the create plan references shared names such as `Platform Admins`, `personal`, or unprefixed workspace object names
 - the run is not using `scenario2.sandbox-create-managed.tfvars`
 - the run is not initialized with `sandbox.local.tfbackend`
-- the run attempts to use `uc_catalog_mode = "existing"` or account-wide roles
+- the run attempts to adopt existing Unity Catalog catalogs or account-wide roles
 
-## Premium Trial Quickstart (Existing Workspace)
+## Sandbox Catalog Contract
 
-This module now defaults to a Premium-trial-friendly workflow that targets an existing Databricks workspace and existing Unity Catalog metastore.
+This branch is sandbox-only for Unity Catalog. It does not expose a mode switch for choosing between existing and isolated catalogs.
 
-1. Copy `template.tfvars.example` to a working `*.tfvars` file.
-2. Fill in required values: `aws_account_id`, `databricks_account_id`, `admin_user`, `region`, `resource_prefix`, `existing_workspace_host`, and `existing_workspace_id`.
-3. Keep the trial defaults:
-   - `pricing_tier = "PREMIUM"`
-   - `workspace_source = "existing"`
-   - `network_configuration = "managed"`
-   - `uc_catalog_mode = "existing"`
-   - `metastore_exists = true` (recommended unless you set `metastore_storage_root` to create a metastore)
-4. Run Terraform from `infra/aws/dbx/databricks/us-west-1`.
+- Use `scenario2.sandbox-create-managed.tfvars` for the supported sandbox workflow.
+- Declare governed sandbox catalogs in `catalogs_config.tf`; do not rely on legacy single-catalog inputs.
+- The bootstrap apply must run first so the workspace ID and metastore assignment come from Terraform state.
+- The post-bootstrap plan is where catalog-name collisions against the assigned metastore are detected.
 
 ## Existing Workspace Identity Rollout
 
@@ -189,27 +195,6 @@ Governed Unity Catalog schemas and optional governed managed volumes are derived
 - Omitted managed-volume `grants` inherit admin `ALL_PRIVILEGES` and reader `READ_VOLUME`.
 - Explicit managed-volume `grants` replace the derived defaults rather than merging with them. The same replacement behavior applies when a catalog override sets `grants` for a template-defined volume.
 - The checked-in governed `volume_config.tf` entrypoint was intentionally removed so governed schema and managed-volume policy live in one place.
-
-## Create Workspace Later
-
-When you are ready for Terraform-managed workspace creation, switch:
-
-- `workspace_source = "create"`
-- `network_configuration = "managed"` (Premium-safe default)
-- Leave `uc_catalog_mode = null` for inferred behavior, or set it explicitly.
-
-This enables workspace creation while still avoiding enterprise-only networking and CMK paths when `pricing_tier = "PREMIUM"`.
-
-## Upgrade to Enterprise SRA
-
-For full SRA behavior (customer-managed network controls, PrivateLink pathing, CMKs, restrictive AWS policies), use:
-
-- `pricing_tier = "ENTERPRISE"`
-- `workspace_source = "create"`
-- `network_configuration = "isolated"` (or `custom` if pre-existing networking is managed elsewhere)
-- `uc_catalog_mode = "isolated"`
-
-If you need the previous full-enterprise sample without modification, use `template.enterprise_sra.tfvars.example`.
 
 ## Read Before Deploying
 
@@ -331,7 +316,7 @@ This section provides additional security recommendations to help maintain a str
 2. Install [Terraform](https://developer.hashicorp.com/terraform/downloads).
 3. In `infra/aws/dbx/databricks/us-west-1`, copy `template.tfvars.example` to a new `*.tfvars` file and fill in your values.
 4. If needed, start from `template.enterprise_sra.tfvars.example` for a full-enterprise baseline.
-5. Decide your operation mode (`workspace_source` and `pricing_tier`) and Unity Catalog mode (`uc_catalog_mode`).
+5. Use the sandbox workflow above and keep `workspace_source`/`pricing_tier` aligned with the selected scenario file.
 6. Configure the [AWS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration) and [Databricks](https://registry.terraform.io/providers/databricks/databricks/latest/docs#authentication) provider authentication.
 7. Change directory into `infra/aws/dbx/databricks/us-west-1`.
 8. Run `terraform init`.
