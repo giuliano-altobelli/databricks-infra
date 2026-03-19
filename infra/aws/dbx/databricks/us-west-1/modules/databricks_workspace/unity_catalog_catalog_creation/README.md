@@ -39,7 +39,7 @@ module "revenue_catalog" {
 ## Workspace Visibility
 
 - The catalog, storage credential, and external location are created in isolated mode.
-- The current `workspace_id` is always bound explicitly.
+- The creating `workspace_id` relies on Databricks' implicit isolated binding and is not managed through explicit binding resources.
 - `workspace_ids` adds extra isolated bindings for other workspaces on the same metastore.
 - This interface does not expose open/shared visibility in the governed catalog rollout.
 

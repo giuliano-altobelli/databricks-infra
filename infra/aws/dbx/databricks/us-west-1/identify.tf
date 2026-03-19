@@ -6,8 +6,7 @@ locals {
   # Define additional account-level groups keyed by stable IDs.
   identity_groups = {
     platform_admins = {
-      display_name          = "Platform Admins"
-      roles                 = ["account_admin"]
+      display_name          = "Sandbox Platform Admins"
       workspace_permissions = ["ADMIN"]
       entitlements = {
         allow_cluster_create  = true
@@ -61,5 +60,8 @@ module "users_groups" {
   groups       = local.identity_groups
   users        = local.identity_users
 
-  depends_on = [module.unity_catalog_metastore_assignment]
+  depends_on = [
+    module.unity_catalog_metastore_assignment,
+    module.user_assignment,
+  ]
 }

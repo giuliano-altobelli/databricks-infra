@@ -3,7 +3,7 @@ locals {
 
   service_principals = {
     uat_promotion = {
-      display_name    = "UAT Promotion SP"
+      display_name    = "Sandbox UAT Promotion SP"
       principal_scope = "account"
       workspace_assignment = {
         enabled     = true
@@ -15,7 +15,7 @@ locals {
     }
 
     workspace_agent = {
-      display_name    = "Workspace Agent SP"
+      display_name    = "Sandbox Workspace Agent SP"
       principal_scope = "workspace"
       entitlements = {
         workspace_access = true
@@ -23,7 +23,7 @@ locals {
     }
 
     # catalog_writer = {
-    #   display_name    = "Catalog Writer SP"
+    #   display_name    = "Sandbox Catalog Writer SP"
     #   principal_scope = "account"
     #   workspace_assignment = {
     #     enabled     = true
@@ -39,7 +39,7 @@ locals {
     # }
     #
     # reporting_reader = {
-    #   display_name    = "Reporting Reader SP"
+    #   display_name    = "Sandbox Reporting Reader SP"
     #   principal_scope = "workspace"
     #   entitlements = {
     #     workspace_access = true

@@ -18,9 +18,14 @@ locals {
   kms_key_name            = local.legacy_name_compat ? "${var.resource_prefix}-catalog-storage-${var.workspace_id}-key" : "${local.resource_name_base}-storage-key"
   kms_key_alias_name      = "alias/${local.kms_key_name}"
 
-  normalized_catalog_workspace_ids = [
-    for workspace_id in concat([var.workspace_id], var.workspace_ids) : trimspace(workspace_id)
+  normalized_additional_catalog_workspace_ids = [
+    for workspace_id in var.workspace_ids : trimspace(workspace_id)
   ]
+
+  normalized_catalog_workspace_ids = concat(
+    [trimspace(var.workspace_id)],
+    local.normalized_additional_catalog_workspace_ids,
+  )
 
   raw_catalog_workspace_binding_keys = [
     for workspace_id in local.normalized_catalog_workspace_ids : workspace_id
@@ -33,9 +38,13 @@ locals {
     ]) > 1
   ])
 
+  # Databricks already binds isolated securables to the creating workspace.
+  # Managing that same binding explicitly breaks destroy ordering because the
+  # workspace-scoped provider loses visibility before Terraform can delete the
+  # securable itself.
   catalog_workspace_bindings = {
-    for workspace_id in distinct(local.normalized_catalog_workspace_ids) :
-    workspace_id => {
+    for workspace_id in distinct(local.normalized_additional_catalog_workspace_ids) :
+    "additional:${workspace_id}" => {
       workspace_id = workspace_id
     }
   }
@@ -350,6 +359,11 @@ resource "databricks_default_namespace_setting" "this" {
   namespace {
     value = databricks_catalog.workspace_catalog[0].name
   }
+
+  depends_on = [
+    databricks_workspace_binding.workspace_catalog,
+    databricks_grant.workspace_catalog,
+  ]
 }
 
 resource "databricks_grant" "workspace_catalog" {
@@ -358,6 +372,8 @@ resource "databricks_grant" "workspace_catalog" {
 
   principal  = var.catalog_admin_principal
   privileges = ["ALL_PRIVILEGES"]
+
+  depends_on = [databricks_workspace_binding.workspace_catalog]
 }
 
 resource "databricks_grants" "workspace_catalog" {
@@ -377,6 +393,8 @@ resource "databricks_grants" "workspace_catalog" {
       privileges = ["USE_CATALOG"]
     }
   }
+
+  depends_on = [databricks_workspace_binding.workspace_catalog]
 }
 
 moved {

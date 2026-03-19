@@ -1,5 +1,74 @@
 # Security Reference Architectures (SRA) - Terraform Templates
 
+## Sandbox Workspace Workflow
+
+This branch creates a second Databricks workspace on the shared account and shared metastore. The only intentionally shared prerequisites are:
+
+- the Databricks account
+- the existing Unity Catalog metastore
+- the existing Okta SCIM-provisioned users
+
+Everything else created by Terraform in this branch must be sandbox-owned.
+
+Initialize Terraform against the dedicated sandbox state:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 init -reconfigure -backend-config=sandbox.local.tfbackend
+```
+
+Before the first apply, confirm the sandbox state is empty:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 state list
+```
+
+Validate and create the sandbox plan:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 validate
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -var-file=scenario2.sandbox-create-managed.tfvars -out=sandbox-create.tfplan
+```
+
+Reject the plan if this command prints anything:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 show -no-color sandbox-create.tfplan | rg 'will be updated in-place|must be replaced|will be destroyed'
+```
+
+Apply only after manual review confirms the plan creates a new workspace and sandbox-prefixed duplicates only:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 apply sandbox-create.tfplan
+```
+
+After apply, confirm the sandbox stack is converged:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -var-file=scenario2.sandbox-create-managed.tfvars
+```
+
+Create and inspect the destroy plan using the same backend config and the same var file:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -destroy -var-file=scenario2.sandbox-create-managed.tfvars -out=sandbox-destroy.tfplan
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 show -no-color sandbox-destroy.tfplan | rg 'will be created|will be updated in-place|must be replaced'
+```
+
+Apply the destroy plan only after review confirms that it targets sandbox-owned resources only:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 apply sandbox-destroy.tfplan
+```
+
+Reject the sandbox run immediately if any of the following are true:
+
+- `terraform state list` shows existing `main` resources before the first sandbox apply
+- the create plan includes any update, replace, or destroy action
+- the create plan references shared names such as `Platform Admins`, `personal`, or unprefixed workspace object names
+- the run is not using `scenario2.sandbox-create-managed.tfvars`
+- the run is not initialized with `sandbox.local.tfbackend`
+- the run attempts to use `uc_catalog_mode = "existing"` or account-wide roles
+
 ## Premium Trial Quickstart (Existing Workspace)
 
 This module now defaults to a Premium-trial-friendly workflow that targets an existing Databricks workspace and existing Unity Catalog metastore.

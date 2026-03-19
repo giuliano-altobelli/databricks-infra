@@ -7,7 +7,7 @@ locals {
 
   sql_warehouses = {
     analytics_ci = {
-      name                      = "Analytics CI Warehouse"
+      name                      = "Sandbox Analytics CI Warehouse"
       cluster_size              = "2X-Small"
       max_num_clusters          = 1
       auto_stop_mins            = 10
@@ -18,7 +18,7 @@ locals {
         name = "CHANNEL_NAME_CURRENT"
       }
       tags = {
-        Environment = "shared"
+        Environment = "sandbox"
         Owner       = "data-platform"
       }
       permissions = concat(

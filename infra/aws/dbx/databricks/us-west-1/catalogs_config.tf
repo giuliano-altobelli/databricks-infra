@@ -6,9 +6,9 @@ locals {
   governed_catalog_domains = {
     personal = {
       enabled             = true
-      display_name        = "Personal"
+      display_name        = "Sandbox Personal"
       catalog_kind        = "personal"
-      catalog_name        = "personal"
+      catalog_name        = "sandbox_personal"
       source              = "personal"
       business_area       = ""
       catalog_admin_group = "platform_admins"
@@ -18,7 +18,8 @@ locals {
 
     # salesforce_revenue = {
     #   enabled             = true
-    #   display_name        = "Salesforce Revenue"
+    #   display_name        = "Sandbox Salesforce Revenue"
+    #   catalog_name        = "sandbox_salesforce_revenue"
     #   source              = "salesforce"
     #   business_area       = "revenue"
     #   catalog_type        = "standard_governed"
@@ -35,7 +36,8 @@ locals {
     # }
     # hubspot_shared = {
     #   enabled             = true
-    #   display_name        = "HubSpot Shared"
+    #   display_name        = "Sandbox HubSpot Shared"
+    #   catalog_name        = "sandbox_hubspot_shared"
     #   source              = "hubspot"
     #   business_area       = ""
     #   catalog_type        = "standard_governed"
@@ -44,8 +46,8 @@ locals {
     # }
     # main = {
     #   enabled             = true
-    #   display_name        = "Main"
-    #   catalog_name        = "main"
+    #   display_name        = "Sandbox Main"
+    #   catalog_name        = "sandbox_main"
     #   source              = "main"
     #   business_area       = ""
     #   catalog_type        = "main_empty" # Example schema-less type with schemas = {}

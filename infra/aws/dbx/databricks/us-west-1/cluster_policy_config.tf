@@ -5,7 +5,7 @@
 locals {
   cluster_policies = {
     bundle_dlt_job = {
-      name        = "Bundle DLT Job Policy"
+      name        = "Sandbox Bundle DLT Job Policy"
       description = "Used by Databricks Asset Bundles for DLT job clusters."
       definition = jsonencode({
         cluster_type = {
@@ -50,7 +50,7 @@ locals {
 
     # Future developer-scoped DLT job policy placeholder.
     # bundle_dlt_job_dev = {
-    #   name        = "Bundle DLT Job Dev Policy"
+    #   name        = "Sandbox Bundle DLT Job Dev Policy"
     #   description = "Future lower-cost DLT job policy for developer bundle deployments."
     #   definition = jsonencode({
     #     cluster_type = {

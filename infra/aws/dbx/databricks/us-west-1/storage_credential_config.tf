@@ -5,36 +5,28 @@
 locals {
   uc_storage_credentials = {
     # bronze_raw = {
-    #   name            = "bronze-raw-storage-credential"
-    #   role_arn        = "arn:aws:iam::123456789012:role/databricks-bronze-raw"
-    #   comment         = "Storage credential for the bronze raw landing bucket."
+    #   name            = "sandbox-bronze-raw-storage-credential"
+    #   role_arn        = "arn:aws:iam::123456789012:role/databricks-sandbox-bronze-raw"
+    #   comment         = "Sandbox storage credential for the bronze raw landing bucket."
     #   owner           = "account users"
     #   skip_validation = true
     #   workspace_ids   = ["1234567890123456"]
     #   grants = [
     #     {
-    #       principal  = "Platform Admins"
-    #       privileges = ["CREATE_EXTERNAL_LOCATION"]
-    #     }
-    #     {
-    #       principal  = "Data Engineers"
-    #       privileges = ["CREATE_EXTERNAL_LOCATION"]
-    #     }
-    #     {
-    #       principal  = "00000000-0000-0000-0000-000000000000" # Databricks service principal application ID
+    #       principal  = "Sandbox Platform Admins"
     #       privileges = ["CREATE_EXTERNAL_LOCATION"]
     #     }
     #   ]
     # }
     #
     # shared_reporting = {
-    #   name                  = "shared-reporting-storage-credential"
-    #   role_arn              = "arn:aws:iam::123456789012:role/databricks-shared-reporting"
-    #   comment               = "Open storage credential shared across all workspaces on the metastore."
+    #   name                  = "sandbox-shared-reporting-storage-credential"
+    #   role_arn              = "arn:aws:iam::123456789012:role/databricks-sandbox-shared-reporting"
+    #   comment               = "Sandbox storage credential shared across all workspaces on the metastore."
     #   workspace_access_mode = "ISOLATION_MODE_OPEN"
     #   grants = [
     #     {
-    #       principal  = "Platform Admins"
+    #       principal  = "Sandbox Platform Admins"
     #       privileges = ["CREATE_EXTERNAL_LOCATION"]
     #     }
     #   ]
@@ -45,9 +37,9 @@ locals {
     # - Grant CREATE_EXTERNAL_LOCATION to a placeholder admin or automation principal that will define the external locations.
     #
     # autoloader_ingest = {
-    #   name            = "autoloader-ingest-storage-credential"
-    #   role_arn        = "arn:aws:iam::123456789012:role/databricks-autoloader-ingest"
-    #   comment         = "Shared storage credential for Auto Loader source files and checkpoint-volume backing storage."
+    #   name            = "sandbox-autoloader-ingest-storage-credential"
+    #   role_arn        = "arn:aws:iam::123456789012:role/databricks-sandbox-autoloader-ingest"
+    #   comment         = "Sandbox storage credential for Auto Loader source files and checkpoint-volume backing storage."
     #   skip_validation = true
     #   grants = [
     #     {
@@ -60,28 +52,24 @@ locals {
 
   uc_external_locations = {
     # bronze_raw_root = {
-    #   name           = "bronze-raw-root"
-    #   url            = "s3://company-bronze-raw/"
+    #   name           = "sandbox-bronze-raw-root"
+    #   url            = "s3://company-sandbox-bronze-raw/"
     #   credential_key = "bronze_raw"
-    #   comment        = "Root prefix for bronze raw datasets."
+    #   comment        = "Sandbox root prefix for bronze raw datasets."
     #   workspace_ids  = ["1234567890123456"]
     #   grants = [
     #     {
-    #       principal  = "Platform Admins"
-    #       privileges = ["CREATE_EXTERNAL_TABLE"]
-    #     }
-    #     {
-    #       principal  = "Data Engineers"
+    #       principal  = "Sandbox Platform Admins"
     #       privileges = ["CREATE_EXTERNAL_TABLE"]
     #     }
     #   ]
     # }
     #
     # bronze_raw_curated = {
-    #   name           = "bronze-raw-curated"
-    #   url            = "s3://company-bronze-raw/curated/"
+    #   name           = "sandbox-bronze-raw-curated"
+    #   url            = "s3://company-sandbox-bronze-raw/curated/"
     #   credential_key = "bronze_raw"
-    #   comment        = "A second external location reusing the same storage credential."
+    #   comment        = "A second sandbox external location reusing the same storage credential."
     # }
     #
     # Auto Loader S3 source + checkpoint volume pattern:
@@ -90,10 +78,10 @@ locals {
     # - Runtime checkpoint access moves to the external volume grants, so the backing location does not keep READ_FILES/WRITE_FILES runtime grants
     #
     # autoloader_source = {
-    #   name           = "autoloader-source"
-    #   url            = "s3://company-bronze-raw/incoming/orders/"
+    #   name           = "sandbox-autoloader-source"
+    #   url            = "s3://company-sandbox-bronze-raw/incoming/orders/"
     #   credential_key = "autoloader_ingest"
-    #   comment        = "Auto Loader source prefix. The service principal reads inbound files from this external location."
+    #   comment        = "Sandbox Auto Loader source prefix. The service principal reads inbound files from this external location."
     #   grants = [
     #     {
     #       principal  = "00000000-0000-0000-0000-000000000000" # Databricks Auto Loader service principal application ID
@@ -103,10 +91,10 @@ locals {
     # }
     #
     # autoloader_checkpoint_root = {
-    #   name           = "autoloader-checkpoint-root"
-    #   url            = "s3://company-bronze-raw/_autoloader/orders/"
+    #   name           = "sandbox-autoloader-checkpoint-root"
+    #   url            = "s3://company-sandbox-bronze-raw/_autoloader/orders/"
     #   credential_key = "autoloader_ingest"
-    #   comment        = "Backing prefix for Auto Loader checkpoint and schema tracking volumes."
+    #   comment        = "Sandbox backing prefix for Auto Loader checkpoint and schema tracking volumes."
     #   grants = [
     #     {
     #       principal  = "11111111-1111-1111-1111-111111111111" # Placeholder admin or automation principal application ID
@@ -116,14 +104,14 @@ locals {
     # }
     #
     # shared_reporting_root = {
-    #   name                  = "shared-reporting-root"
-    #   url                   = "s3://company-shared-reporting/"
+    #   name                  = "sandbox-shared-reporting-root"
+    #   url                   = "s3://company-sandbox-shared-reporting/"
     #   credential_key        = "shared_reporting"
-    #   comment               = "Open external location visible to every workspace on the shared metastore."
+    #   comment               = "Sandbox open external location visible to every workspace on the shared metastore."
     #   workspace_access_mode = "ISOLATION_MODE_OPEN"
     #   grants = [
     #     {
-    #       principal  = "Platform Admins"
+    #       principal  = "Sandbox Platform Admins"
     #       privileges = ["CREATE_EXTERNAL_TABLE"]
     #     }
     #   ]
