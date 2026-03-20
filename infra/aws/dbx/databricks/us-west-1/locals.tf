@@ -24,5 +24,5 @@ locals {
   enable_disable_legacy_settings            = local.is_enterprise
 
   # Temporary compatibility alias for disabled single-catalog consumers.
-  catalog_name = try(module.governed_catalogs["personal"].catalog_name, null)
+  # catalog_name = try(module.governed_catalogs["personal"].catalog_name, null)
 }
