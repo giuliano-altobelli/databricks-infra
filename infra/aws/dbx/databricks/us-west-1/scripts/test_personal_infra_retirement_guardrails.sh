@@ -102,7 +102,46 @@ cat >"$tmpdir/retirement-plan-approved-expanded-scope.json" <<'EOF'
       }
     },
     {
-      "address": "module.log_delivery.databricks_mws_log_delivery.audit_logs",
+      "address": "module.databricks_mws_workspace.null_resource.previous",
+      "mode": "managed",
+      "type": "null_resource",
+      "name": "previous",
+      "change": {
+        "actions": ["delete"],
+        "before": {
+          "id": "123"
+        },
+        "after": null
+      }
+    },
+    {
+      "address": "module.databricks_mws_workspace.time_sleep.wait_30_seconds",
+      "mode": "managed",
+      "type": "time_sleep",
+      "name": "wait_30_seconds",
+      "change": {
+        "actions": ["delete"],
+        "before": {
+          "id": "2026-03-20T00:00:00Z"
+        },
+        "after": null
+      }
+    },
+    {
+      "address": "module.log_delivery[0].time_sleep.wait",
+      "mode": "managed",
+      "type": "time_sleep",
+      "name": "wait",
+      "change": {
+        "actions": ["delete"],
+        "before": {
+          "id": "2026-03-20T00:00:10Z"
+        },
+        "after": null
+      }
+    },
+    {
+      "address": "module.log_delivery[0].databricks_mws_log_delivery.audit_logs",
       "mode": "managed",
       "type": "databricks_mws_log_delivery",
       "name": "audit_logs",
@@ -124,7 +163,10 @@ EOF
   >"$tmpdir/approved-expanded-scope.out"
 rg -q -- '- module.network_connectivity_configuration.databricks_mws_network_connectivity_config.ncc' "$tmpdir/approved-expanded-scope.out"
 rg -q -- '- module.network_policy.databricks_account_network_policy.restrictive_network_policy' "$tmpdir/approved-expanded-scope.out"
-rg -q -- '- module.log_delivery.databricks_mws_log_delivery.audit_logs' "$tmpdir/approved-expanded-scope.out"
+rg -F -q -- '- module.databricks_mws_workspace.null_resource.previous' "$tmpdir/approved-expanded-scope.out"
+rg -F -q -- '- module.databricks_mws_workspace.time_sleep.wait_30_seconds' "$tmpdir/approved-expanded-scope.out"
+rg -F -q -- '- module.log_delivery[0].time_sleep.wait' "$tmpdir/approved-expanded-scope.out"
+rg -F -q -- '- module.log_delivery[0].databricks_mws_log_delivery.audit_logs' "$tmpdir/approved-expanded-scope.out"
 
 for fixture in \
   retirement-plan-empty.json \

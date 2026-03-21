@@ -10,6 +10,8 @@ APPROVED_DELETE_ADDRESSES_JSON='[
   "aws_s3_bucket_server_side_encryption_configuration.root_storage_bucket_sse_s3",
   "aws_s3_bucket_public_access_block.root_storage_bucket",
   "aws_s3_bucket_policy.root_bucket_policy",
+  "module.databricks_mws_workspace.null_resource.previous",
+  "module.databricks_mws_workspace.time_sleep.wait_30_seconds",
   "module.databricks_mws_workspace.databricks_mws_credentials.this",
   "module.databricks_mws_workspace.databricks_mws_storage_configurations.this",
   "module.databricks_mws_workspace.databricks_mws_workspaces.workspace",
@@ -17,14 +19,15 @@ APPROVED_DELETE_ADDRESSES_JSON='[
   "module.user_assignment.databricks_mws_permission_assignment.workspace_access",
   "module.network_connectivity_configuration.databricks_mws_network_connectivity_config.ncc",
   "module.network_policy.databricks_account_network_policy.restrictive_network_policy",
-  "module.log_delivery.aws_s3_bucket.log_delivery",
-  "module.log_delivery.aws_s3_bucket_public_access_block.log_delivery",
-  "module.log_delivery.aws_s3_bucket_versioning.log_delivery_versioning",
-  "module.log_delivery.aws_s3_bucket_policy.log_delivery",
-  "module.log_delivery.aws_iam_role.log_delivery",
-  "module.log_delivery.databricks_mws_credentials.log_writer",
-  "module.log_delivery.databricks_mws_storage_configurations.log_bucket",
-  "module.log_delivery.databricks_mws_log_delivery.audit_logs"
+  "module.log_delivery[0].aws_s3_bucket.log_delivery",
+  "module.log_delivery[0].aws_s3_bucket_public_access_block.log_delivery",
+  "module.log_delivery[0].aws_s3_bucket_versioning.log_delivery_versioning",
+  "module.log_delivery[0].aws_s3_bucket_policy.log_delivery",
+  "module.log_delivery[0].aws_iam_role.log_delivery",
+  "module.log_delivery[0].time_sleep.wait",
+  "module.log_delivery[0].databricks_mws_credentials.log_writer",
+  "module.log_delivery[0].databricks_mws_storage_configurations.log_bucket",
+  "module.log_delivery[0].databricks_mws_log_delivery.audit_logs"
 ]'
 
 if [[ "${1:-}" == "--plan-json" ]]; then

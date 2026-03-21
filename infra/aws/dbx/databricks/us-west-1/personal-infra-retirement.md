@@ -68,18 +68,20 @@ Import only the current-root addresses below, in this order, when each object is
 10. `module.databricks_mws_workspace.databricks_mws_workspaces.workspace`
 11. `module.network_connectivity_configuration.databricks_mws_network_connectivity_config.ncc`
 12. `module.network_policy.databricks_account_network_policy.restrictive_network_policy`
-13. `module.log_delivery.aws_s3_bucket.log_delivery`
-14. `module.log_delivery.aws_s3_bucket_public_access_block.log_delivery`
-15. `module.log_delivery.aws_s3_bucket_versioning.log_delivery_versioning`
-16. `module.log_delivery.aws_s3_bucket_policy.log_delivery`
-17. `module.log_delivery.aws_iam_role.log_delivery`
-18. `module.log_delivery.databricks_mws_credentials.log_writer`
-19. `module.log_delivery.databricks_mws_storage_configurations.log_bucket`
-20. `module.log_delivery.databricks_mws_log_delivery.audit_logs`
+13. `module.log_delivery[0].aws_s3_bucket.log_delivery`
+14. `module.log_delivery[0].aws_s3_bucket_public_access_block.log_delivery`
+15. `module.log_delivery[0].aws_s3_bucket_versioning.log_delivery_versioning`
+16. `module.log_delivery[0].aws_s3_bucket_policy.log_delivery`
+17. `module.log_delivery[0].aws_iam_role.log_delivery`
+18. `module.log_delivery[0].databricks_mws_credentials.log_writer`
+19. `module.log_delivery[0].databricks_mws_storage_configurations.log_bucket`
+20. `module.log_delivery[0].databricks_mws_log_delivery.audit_logs`
 21. `module.unity_catalog_metastore_assignment.databricks_metastore_assignment.default_metastore`
 22. `module.user_assignment.databricks_mws_permission_assignment.workspace_access`
 
 Only document or run import commands whose resource-specific import IDs have been verified in the provider docs; do not guess Databricks import ID formats.
+
+Recovered historical state may also contain `module.databricks_mws_workspace.null_resource.previous`, `module.databricks_mws_workspace.time_sleep.wait_30_seconds`, or `module.log_delivery[0].time_sleep.wait`. These are state-only helper resources that are safe to let Terraform delete if they appear in Path A, but they should not be imported in Path B.
 
 Anything not on the checklist, or anything whose ownership is still uncertain, stays out of Terraform state and moves to manual adjudication.
 
