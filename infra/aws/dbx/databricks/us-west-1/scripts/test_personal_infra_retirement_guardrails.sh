@@ -34,6 +34,9 @@ rg -q 'retirement state contains sandbox markers; refusing to continue' "$tmpdir
 "$SCRIPTS_DIR/verify_personal_infra_retirement_destroy_plan.sh" \
   --plan-json "$TESTDATA_DIR/retirement-plan-delete-only.json" \
   >"$tmpdir/delete-only.out"
+rg -q 'Retirement destroy plan review summary:' "$tmpdir/delete-only.out"
+rg -q -- '- aws_s3_bucket.root_storage_bucket' "$tmpdir/delete-only.out"
+rg -q -- '- module.databricks_mws_workspace.databricks_mws_workspaces.workspace' "$tmpdir/delete-only.out"
 
 for fixture in \
   retirement-plan-empty.json \
@@ -47,4 +50,73 @@ do
     echo "expected destroy-plan verifier to reject $fixture" >&2
     exit 1
   fi
+  case "$fixture" in
+    retirement-plan-empty.json)
+      rg -q 'destroy plan contains no delete actions; refusing to continue' "$tmpdir/$fixture.err"
+      ;;
+    retirement-plan-mixed-actions.json)
+      rg -q 'destroy plan contains create, update, or replace actions; refusing to continue' "$tmpdir/$fixture.err"
+      ;;
+    retirement-plan-forbidden-metastore.json|retirement-plan-sandbox-contamination.json)
+      rg -q 'destroy plan touches preserved shared resources or sandbox markers; refusing to continue' "$tmpdir/$fixture.err"
+      ;;
+  esac
 done
+
+cat >"$tmpdir/retirement-plan-forbidden-user.json" <<'EOF'
+{
+  "format_version": "1.2",
+  "resource_changes": [
+    {
+      "address": "databricks_user.this",
+      "mode": "managed",
+      "type": "databricks_user",
+      "name": "this",
+      "change": {
+        "actions": ["delete"],
+        "before": {
+          "user_name": "person@example.com"
+        },
+        "after": null
+      }
+    }
+  ]
+}
+EOF
+
+if "$SCRIPTS_DIR/verify_personal_infra_retirement_destroy_plan.sh" \
+  --plan-json "$tmpdir/retirement-plan-forbidden-user.json" \
+  >"$tmpdir/retirement-plan-forbidden-user.out" 2>"$tmpdir/retirement-plan-forbidden-user.err"; then
+  echo "expected destroy-plan verifier to reject databricks_user delete fixture" >&2
+  exit 1
+fi
+rg -q 'destroy plan touches preserved shared resources or sandbox markers; refusing to continue' "$tmpdir/retirement-plan-forbidden-user.err"
+
+cat >"$tmpdir/retirement-plan-forbidden-okta-group.json" <<'EOF'
+{
+  "format_version": "1.2",
+  "resource_changes": [
+    {
+      "address": "databricks_group.okta_databricks_users",
+      "mode": "managed",
+      "type": "databricks_group",
+      "name": "okta_databricks_users",
+      "change": {
+        "actions": ["delete"],
+        "before": {
+          "display_name": "okta-databricks-users"
+        },
+        "after": null
+      }
+    }
+  ]
+}
+EOF
+
+if "$SCRIPTS_DIR/verify_personal_infra_retirement_destroy_plan.sh" \
+  --plan-json "$tmpdir/retirement-plan-forbidden-okta-group.json" \
+  >"$tmpdir/retirement-plan-forbidden-okta-group.out" 2>"$tmpdir/retirement-plan-forbidden-okta-group.err"; then
+  echo "expected destroy-plan verifier to reject okta-databricks-users fixture" >&2
+  exit 1
+fi
+rg -q 'destroy plan touches preserved shared resources or sandbox markers; refusing to continue' "$tmpdir/retirement-plan-forbidden-okta-group.err"
