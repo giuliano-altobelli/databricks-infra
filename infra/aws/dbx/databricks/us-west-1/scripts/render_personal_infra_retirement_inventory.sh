@@ -22,6 +22,11 @@ jq -e '[.. | strings | select(test("sandbox"; "i"))] | length == 0' <<<"$STATE_J
   exit 1
 }
 
+jq -e '[.. | strings | select(test("personal-infra"; "i"))] | length > 0' <<<"$STATE_JSON" >/dev/null || {
+  echo "retirement state contains no personal-infra ownership markers; refusing to inventory a non-personal backend" >&2
+  exit 1
+}
+
 jq -r '
   [
     "# Personal Infra Retirement Inventory",

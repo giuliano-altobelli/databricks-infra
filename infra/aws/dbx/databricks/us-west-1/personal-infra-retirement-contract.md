@@ -8,7 +8,7 @@
 
 ## Destroy Through Retirement State
 
-The following current-root-managed objects are safe to represent in retirement state when they are provably `personal-infra`-owned:
+Only the following current-root-managed addresses are approved for destroy through retirement state, and only when each object is provably `personal-infra`-owned:
 
 - `aws_iam_role.cross_account_role`
 - `aws_iam_role_policy.cross_account`
@@ -20,10 +20,20 @@ The following current-root-managed objects are safe to represent in retirement s
 - `module.databricks_mws_workspace.databricks_mws_credentials.this`
 - `module.databricks_mws_workspace.databricks_mws_storage_configurations.this`
 - `module.databricks_mws_workspace.databricks_mws_workspaces.workspace`
+- `module.network_connectivity_configuration.databricks_mws_network_connectivity_config.ncc`
+- `module.network_policy.databricks_account_network_policy.restrictive_network_policy`
+- `module.log_delivery.aws_s3_bucket.log_delivery`
+- `module.log_delivery.aws_s3_bucket_public_access_block.log_delivery`
+- `module.log_delivery.aws_s3_bucket_versioning.log_delivery_versioning`
+- `module.log_delivery.aws_s3_bucket_policy.log_delivery`
+- `module.log_delivery.aws_iam_role.log_delivery`
+- `module.log_delivery.databricks_mws_credentials.log_writer`
+- `module.log_delivery.databricks_mws_storage_configurations.log_bucket`
+- `module.log_delivery.databricks_mws_log_delivery.audit_logs`
 - `module.unity_catalog_metastore_assignment.databricks_metastore_assignment.default_metastore`
 - `module.user_assignment.databricks_mws_permission_assignment.workspace_access`
 
-Additional resources may be included only when they are both present in the retirement state and clearly attributable to `personal-infra`.
+Any delete address outside this approved scope must be rejected unless it has been explicitly adjudicated, added to this contract and the runbook, and then re-reviewed as part of the retirement workflow.
 
 ## Manual Adjudication Required
 
@@ -41,3 +51,4 @@ The human must reject any destroy plan that:
 - includes create, update, or replace actions
 - includes `sandbox` resource names, addresses, or IDs
 - contains resources whose ownership is still uncertain
+- includes any delete address outside the approved destroy-through-retirement-state scope above

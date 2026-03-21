@@ -66,8 +66,18 @@ Import only the current-root addresses below, in this order, when each object is
 8. `module.databricks_mws_workspace.databricks_mws_credentials.this`
 9. `module.databricks_mws_workspace.databricks_mws_storage_configurations.this`
 10. `module.databricks_mws_workspace.databricks_mws_workspaces.workspace`
-11. `module.unity_catalog_metastore_assignment.databricks_metastore_assignment.default_metastore`
-12. `module.user_assignment.databricks_mws_permission_assignment.workspace_access`
+11. `module.network_connectivity_configuration.databricks_mws_network_connectivity_config.ncc`
+12. `module.network_policy.databricks_account_network_policy.restrictive_network_policy`
+13. `module.log_delivery.aws_s3_bucket.log_delivery`
+14. `module.log_delivery.aws_s3_bucket_public_access_block.log_delivery`
+15. `module.log_delivery.aws_s3_bucket_versioning.log_delivery_versioning`
+16. `module.log_delivery.aws_s3_bucket_policy.log_delivery`
+17. `module.log_delivery.aws_iam_role.log_delivery`
+18. `module.log_delivery.databricks_mws_credentials.log_writer`
+19. `module.log_delivery.databricks_mws_storage_configurations.log_bucket`
+20. `module.log_delivery.databricks_mws_log_delivery.audit_logs`
+21. `module.unity_catalog_metastore_assignment.databricks_metastore_assignment.default_metastore`
+22. `module.user_assignment.databricks_mws_permission_assignment.workspace_access`
 
 Only document or run import commands whose resource-specific import IDs have been verified in the provider docs; do not guess Databricks import ID formats.
 
@@ -90,7 +100,7 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
 DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 apply personal-infra-retirement.destroy.tfplan
 ```
 
-Before `apply`, the human must compare the refreshed `/tmp/personal-infra-retirement-inventory.md` and the full `terraform show -no-color personal-infra-retirement.destroy.tfplan` output against `personal-infra-retirement-contract.md`. Treat the verifier script output as an additional guardrail, not as the complete review artifact. Reject the plan if it deletes preserved shared resources, includes any create or replace action, references `sandbox`, or includes anything whose ownership is still uncertain.
+Before `apply`, the human must compare the refreshed `/tmp/personal-infra-retirement-inventory.md` and the full `terraform show -no-color personal-infra-retirement.destroy.tfplan` output against `personal-infra-retirement-contract.md`. Treat the verifier script output as an additional guardrail, not as the complete review artifact. Reject the plan if it deletes preserved shared resources, includes any create or replace action, references `sandbox`, includes any delete address outside the approved destroy-through-retirement-state scope, or includes anything whose ownership is still uncertain.
 
 ## Post-Destroy Verification
 
