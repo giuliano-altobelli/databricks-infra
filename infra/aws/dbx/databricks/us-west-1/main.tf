@@ -9,14 +9,12 @@ module "unity_catalog_metastore_creation" {
     databricks = databricks.mws
   }
 
-  region                 = var.region
-  metastore_exists       = var.metastore_exists
-  metastore_storage_root = var.metastore_storage_root
+  region           = var.region
+  metastore_exists = var.metastore_exists
 }
 
 # Create Network Connectivity Connection Object
 module "network_connectivity_configuration" {
-  count  = local.enable_network_connectivity_configuration ? 1 : 0
   source = "./modules/databricks_account/network_connectivity_configuration"
   providers = {
     databricks = databricks.mws
@@ -28,7 +26,6 @@ module "network_connectivity_configuration" {
 
 # Create a Network Policy
 module "network_policy" {
-  count  = local.enable_network_policy ? 1 : 0
   source = "./modules/databricks_account/network_policy"
   providers = {
     databricks = databricks.mws
@@ -40,7 +37,6 @@ module "network_policy" {
 
 # Create Databricks Workspace
 module "databricks_mws_workspace" {
-  count  = local.create_workspace ? 1 : 0
   source = "./modules/databricks_account/workspace"
 
   providers = {
@@ -54,7 +50,7 @@ module "databricks_mws_workspace" {
   deployment_name       = var.deployment_name
   pricing_tier          = var.pricing_tier
 
-  # Feature Gating
+  # Feature gating follows the root-module create-workspace path.
   enable_customer_managed_network  = local.enable_customer_managed_network
   enable_customer_managed_keys     = local.enable_customer_managed_keys
   enable_private_access_settings   = local.enable_enterprise_infra
@@ -79,10 +75,10 @@ module "databricks_mws_workspace" {
   ) : null
 
   # Cross-Account Role
-  cross_account_role_arn = aws_iam_role.cross_account_role[0].arn
+  cross_account_role_arn = aws_iam_role.cross_account_role.arn
 
   # Root Storage Bucket
-  bucket_name = aws_s3_bucket.root_storage_bucket[0].id
+  bucket_name = aws_s3_bucket.root_storage_bucket.id
 
   # KMS Keys
   managed_services_key        = local.enable_customer_managed_keys ? aws_kms_key.managed_services[0].arn : null
@@ -91,10 +87,10 @@ module "databricks_mws_workspace" {
   workspace_storage_key_alias = local.enable_customer_managed_keys ? aws_kms_alias.workspace_storage_key_alias[0].name : null
 
   # Network Connectivity Configuration and Network Policy
-  network_connectivity_configuration_id = local.enable_network_connectivity_configuration ? module.network_connectivity_configuration[0].ncc_id : null
-  network_policy_id                     = local.enable_network_policy ? module.network_policy[0].network_policy_id : null
+  network_connectivity_configuration_id = local.enable_network_connectivity_configuration ? module.network_connectivity_configuration.ncc_id : null
+  network_policy_id                     = local.enable_network_policy ? module.network_policy.network_policy_id : null
 
-  depends_on = [module.unity_catalog_metastore_creation]
+  depends_on = [module.unity_catalog_metastore_creation, module.network_connectivity_configuration, module.network_policy]
 }
 
 # Unity Catalog Assignment
@@ -107,7 +103,7 @@ module "unity_catalog_metastore_assignment" {
   metastore_id = module.unity_catalog_metastore_creation.metastore_id
   workspace_id = local.workspace_id
 
-  depends_on = [module.unity_catalog_metastore_creation]
+  depends_on = [module.unity_catalog_metastore_creation, module.databricks_mws_workspace]
 }
 
 # User Workspace Assignment (Admin)
@@ -120,12 +116,12 @@ module "user_assignment" {
   workspace_id     = local.workspace_id
   workspace_access = var.admin_user
 
-  depends_on = [module.unity_catalog_metastore_assignment]
+  depends_on = [module.unity_catalog_metastore_assignment, module.databricks_mws_workspace]
 }
 
 # Audit Log Delivery
 module "log_delivery" {
-  count  = var.enable_audit_log_delivery && !var.audit_log_delivery_exists ? 1 : 0
+  count  = var.audit_log_delivery_exists ? 0 : 1
   source = "./modules/databricks_account/audit_log_delivery"
   providers = {
     databricks = databricks.mws
@@ -140,107 +136,101 @@ module "log_delivery" {
 # Databricks Workspace Modules
 # =============================================================================
 
-# Creates a Workspace Isolated Catalog
-module "unity_catalog_catalog_creation" {
-  count  = local.effective_uc_catalog_mode == "isolated" ? 1 : 0
-  source = "./modules/databricks_workspace/unity_catalog_catalog_creation"
-  providers = {
-    databricks = databricks.created_workspace
-  }
+# # Creates a Workspace Isolated Catalog
+# module "unity_catalog_catalog_creation" {
+#   source = "./modules/databricks_workspace/unity_catalog_catalog_creation"
+#   providers = {
+#     databricks = databricks.created_workspace
+#   }
 
-  aws_account_id          = var.aws_account_id
-  aws_iam_partition       = local.computed_aws_partition
-  aws_assume_partition    = local.assume_role_partition
-  unity_catalog_iam_arn   = local.unity_catalog_iam_arn
-  resource_prefix         = var.resource_prefix
-  catalog_name            = replace("${var.resource_prefix}-catalog-${local.workspace_id}", "-", "_")
-  cmk_admin_arn           = var.cmk_admin_arn == null ? "arn:${local.computed_aws_partition}:iam::${var.aws_account_id}:root" : var.cmk_admin_arn
-  workspace_id            = local.workspace_id
-  catalog_admin_principal = var.admin_user
-  workspace_ids           = []
-  set_default_namespace   = true
+#   aws_account_id               = var.aws_account_id
+#   aws_iam_partition            = local.computed_aws_partition
+#   aws_assume_partition         = local.assume_role_partition
+#   unity_catalog_iam_arn        = local.unity_catalog_iam_arn
+#   resource_prefix              = var.resource_prefix
+#   uc_catalog_name              = "${var.resource_prefix}-catalog-${module.databricks_mws_workspace.workspace_id}"
+#   cmk_admin_arn                = var.cmk_admin_arn == null ? "arn:${local.computed_aws_partition}:iam::${var.aws_account_id}:root" : var.cmk_admin_arn
+#   workspace_id                 = module.databricks_mws_workspace.workspace_id
+#   user_workspace_catalog_admin = var.admin_user
 
-  depends_on = [module.unity_catalog_metastore_assignment]
-}
+#   depends_on = [module.unity_catalog_metastore_assignment]
+# }
 
-# Restrictive Root Bucket Policy
-module "restrictive_root_bucket" {
-  count  = local.enable_restrictive_root_bucket ? 1 : 0
-  source = "./modules/databricks_workspace/restrictive_root_bucket"
-  providers = {
-    aws = aws
-  }
+# # Restrictive Root Buckt Policy
+# module "restrictive_root_bucket" {
+#   source = "./modules/databricks_workspace/restrictive_root_bucket"
+#   providers = {
+#     aws = aws
+#   }
 
-  databricks_account_id = var.databricks_account_id
-  aws_partition         = local.computed_aws_partition
-  databricks_gov_shard  = var.databricks_gov_shard
-  workspace_id          = local.workspace_id
-  region_name           = var.databricks_gov_shard == "dod" ? var.region_name_config[var.region].secondary_name : var.region_name_config[var.region].primary_name
-  root_s3_bucket        = "${var.resource_prefix}-workspace-root-storage"
-}
+#   databricks_account_id = var.databricks_account_id
+#   aws_partition         = local.computed_aws_partition
+#   databricks_gov_shard  = var.databricks_gov_shard
+#   workspace_id          = module.databricks_mws_workspace.workspace_id
+#   region_name           = var.databricks_gov_shard == "dod" ? var.region_name_config[var.region].secondary_name : var.region_name_config[var.region].primary_name
+#   root_s3_bucket        = "${var.resource_prefix}-workspace-root-storage"
+# }
 
-# Disable legacy settings like Hive Metastore, Disables Databricks Runtime prior to 13.3 LTS, DBFS, DBFS Mounts,etc.
-module "disable_legacy_settings" {
-  count  = local.enable_disable_legacy_settings ? 1 : 0
-  source = "./modules/databricks_workspace/disable_legacy_settings"
-  providers = {
-    databricks = databricks.created_workspace
-  }
-}
+# # Disable legacy settings like Hive Metastore, Disables Databricks Runtime prior to 13.3 LTS, DBFS, DBFS Mounts,etc.
+# module "disable_legacy_settings" {
+#   source = "./modules/databricks_workspace/disable_legacy_settings"
+#   providers = {
+#     databricks = databricks.created_workspace
+#   }
+# }
 
-# Enable Compliance Security Profile (CSP) on the Databricks Workspace.
-module "compliance_security_profile" {
-  count  = var.enable_compliance_security_profile ? 1 : 0
-  source = "./modules/databricks_workspace/compliance_security_profile"
+# # Enable Compliance Security Profile (CSP) on the Databricks Workspace.
+# module "compliance_security_profile" {
+#   count  = var.enable_compliance_security_profile ? 1 : 0
+#   source = "./modules/databricks_workspace/compliance_security_profile"
 
-  providers = {
-    databricks = databricks.created_workspace
-  }
+#   providers = {
+#     databricks = databricks.created_workspace
+#   }
 
-  compliance_standards = var.compliance_standards
-}
+#   compliance_standards = var.compliance_standards
+# }
 
-# Create Cluster
-module "cluster_configuration" {
-  count  = var.enable_example_cluster ? 1 : 0
-  source = "./modules/databricks_workspace/classic_cluster"
-  providers = {
-    databricks = databricks.created_workspace
-  }
+# # Create Cluster
+# module "cluster_configuration" {
+#   source = "./modules/databricks_workspace/classic_cluster"
+#   providers = {
+#     databricks = databricks.created_workspace
+#   }
 
-  enable_compliance_security_profile = var.enable_compliance_security_profile
-  resource_prefix                    = var.resource_prefix
-  region                             = var.region
+#   enable_compliance_security_profile = var.enable_compliance_security_profile
+#   resource_prefix                    = var.resource_prefix
+#   region                             = var.region
 
-  depends_on = [module.unity_catalog_metastore_assignment]
-}
+#   depends_on = [module.databricks_mws_workspace]
+# }
 
-# =============================================================================
-# Security Analysis Tool  - PyPI must be enabled in network policy resource to function.
-# =============================================================================
+# # =============================================================================
+# # Security Analysis Tool  - PyPI must be enabled in network policy resource to function.
+# # =============================================================================
 
-module "security_analysis_tool" {
-  count  = var.enable_security_analysis_tool && var.region != "us-gov-west-1" ? 1 : 0
-  source = "./modules/security_analysis_tool"
+# module "security_analysis_tool" {
+#   count  = var.enable_security_analysis_tool && var.region != "us-gov-west-1" ? 1 : 0
+#   source = "./modules/security_analysis_tool"
 
-  providers = {
-    databricks = databricks.created_workspace
-  }
+#   providers = {
+#     databricks = databricks.created_workspace
+#   }
 
-  # Authentication Variables
-  databricks_account_id = var.databricks_account_id
-  client_id             = null # Provide Workspace Admin ID
-  client_secret         = null # Provide Workspace Admin Secret
+#   # Authentication Variables
+#   databricks_account_id = var.databricks_account_id
+#   client_id             = null # Provide Workspace Admin ID
+#   client_secret         = null # Provide Workspace Admin Secret
 
-  use_sp_auth = true
+#   use_sp_auth = true
 
-  # Databricks Variables
-  analysis_schema_name = replace("${local.catalog_name}.SAT", "-", "_")
-  workspace_id         = local.workspace_id
+#   # Databricks Variables
+#   analysis_schema_name = replace("${var.resource_prefix}-catalog-${module.databricks_mws_workspace.workspace_id}.SAT", "-", "_")
+#   workspace_id         = module.databricks_mws_workspace.workspace_id
 
-  # Configuration Variables
-  proxies           = {}
-  run_on_serverless = true
+#   # Configuration Variables
+#   proxies           = {}
+#   run_on_serverless = true
 
-  depends_on = [module.unity_catalog_catalog_creation]
-}
+#   depends_on = [module.unity_catalog_catalog_creation]
+# }

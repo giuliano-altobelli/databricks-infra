@@ -102,6 +102,24 @@ locals {
   )
 }
 
+data "databricks_user" "workspace_users" {
+  provider = databricks.workspace
+  for_each = local.user_entitlements
+
+  user_name = local.enabled_users[each.key].user_name
+
+  depends_on = [databricks_mws_permission_assignment.user_workspace_assignments]
+}
+
+data "databricks_group" "workspace_groups" {
+  provider = databricks.workspace
+  for_each = local.group_entitlements
+
+  display_name = local.enabled_groups[each.key].display_name
+
+  depends_on = [databricks_mws_permission_assignment.group_workspace_assignments]
+}
+
 resource "databricks_group_member" "memberships" {
   provider = databricks.mws
   for_each = local.memberships
@@ -148,22 +166,26 @@ resource "databricks_entitlements" "user_entitlements" {
   provider = databricks.workspace
   for_each = local.user_entitlements
 
-  user_id                    = local.user_id_map[each.key]
+  user_id                    = data.databricks_user.workspace_users[each.key].id
   allow_cluster_create       = each.value.allow_cluster_create
   allow_instance_pool_create = each.value.allow_instance_pool_create
   databricks_sql_access      = each.value.databricks_sql_access
   workspace_access           = each.value.workspace_access
   workspace_consume          = each.value.workspace_consume
+
+  depends_on = [databricks_mws_permission_assignment.user_workspace_assignments]
 }
 
 resource "databricks_entitlements" "group_entitlements" {
   provider = databricks.workspace
   for_each = local.group_entitlements
 
-  group_id                   = local.group_id_map[each.key]
+  group_id                   = data.databricks_group.workspace_groups[each.key].id
   allow_cluster_create       = each.value.allow_cluster_create
   allow_instance_pool_create = each.value.allow_instance_pool_create
   databricks_sql_access      = each.value.databricks_sql_access
   workspace_access           = each.value.workspace_access
   workspace_consume          = each.value.workspace_consume
+
+  depends_on = [databricks_mws_permission_assignment.group_workspace_assignments]
 }

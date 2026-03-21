@@ -30,7 +30,7 @@
 ## Terraform Scenario Vars
 
 - Use the scenario var files in `infra/aws/dbx/databricks/us-west-1`:
-  - `scenario1.premium-existing.tfvars`: Premium + existing workspace + managed networking (default/recommended).
+  - `scenario1.premium-existing.tfvars`: Legacy filename retained; Premium + create workspace + managed networking reference.
   - `scenario2.premium-create-managed.tfvars`: Premium + create workspace + managed networking.
   - `scenario3.enterprise-create-isolated.tfvars`: Enterprise + create workspace + isolated networking (full SRA path).
 - Use this command pattern for all plan/apply runs:

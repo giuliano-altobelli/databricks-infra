@@ -86,7 +86,7 @@
   5. Create the S3 bucket plus encryption and public-access settings.
   6. Create the Databricks external location for the bucket root.
   7. Create the Databricks catalog with workspace-isolated visibility.
-  8. Create explicit `databricks_workspace_binding` resources for the storage credential, external location, and catalog.
+  8. Create explicit `databricks_workspace_binding` resources only for additional `workspace_ids`; the creating workspace relies on Databricks' implicit isolated binding.
   9. Create one authoritative catalog admin grant set for `catalog_admin_principal`.
   10. Skip default-namespace changes unless `set_default_namespace = true`.
 - Bootstrap contract:
@@ -95,7 +95,7 @@
   - keep the internal wait and ordering guard between IAM readiness and external-location validation
   - treat first-apply bootstrap failures as implementation defects against the approved one-pass contract
 - Workspace binding behavior:
-  - the creating workspace is always bound explicitly even though it created the securables
+  - the creating workspace relies on Databricks' implicit isolated binding and is not managed through explicit `databricks_workspace_binding` resources
   - `workspace_ids` adds extra isolated bindings on the same metastore
   - this change does not implement open/shared visibility
 - Grant behavior:
