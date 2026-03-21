@@ -37,6 +37,12 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
 
 Any object that should be preserved under the contract, any object with `sandbox` markers, and any object whose ownership is still uncertain must be removed from retirement state and handled outside automated destroy.
 
+After the retirement state has been pruned, regenerate `/tmp/personal-infra-retirement-inventory.md` so the inventory used during final review matches the actual destroy input state.
+
+```bash
+infra/aws/dbx/databricks/us-west-1/scripts/render_personal_infra_retirement_inventory.sh > /tmp/personal-infra-retirement-inventory.md
+```
+
 ## Path B: Reconstruct Retirement State By Import
 
 Use this path only when no trustworthy historical `personal-infra` state can be recovered. Start from the same retirement-only backend and confirm that there are no retirement resources loaded before any import. On a fresh local backend, `terraform state list` may print `No state file was found!`; that still indicates an empty retirement state rather than backend contamination.
@@ -84,11 +90,11 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
 DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 apply personal-infra-retirement.destroy.tfplan
 ```
 
-Before `apply`, the human must compare both `/tmp/personal-infra-retirement-inventory.md` and the destroy-plan summary against `personal-infra-retirement-contract.md`. Reject the plan if it deletes preserved shared resources, includes any create or replace action, references `sandbox`, or includes anything whose ownership is still uncertain.
+Before `apply`, the human must compare the refreshed `/tmp/personal-infra-retirement-inventory.md` and the full `terraform show -no-color personal-infra-retirement.destroy.tfplan` output against `personal-infra-retirement-contract.md`. Treat the verifier script output as an additional guardrail, not as the complete review artifact. Reject the plan if it deletes preserved shared resources, includes any create or replace action, references `sandbox`, or includes anything whose ownership is still uncertain.
 
 ## Post-Destroy Verification
 
-After apply completes, confirm the retirement state is empty, switch back to the sandbox backend, and verify the active baseline still plans cleanly.
+After apply completes, confirm the retirement state is empty, switch back to the sandbox backend, and verify the active baseline still plans cleanly. If `terraform state list` prints `No state file was found!` after destroy, that still indicates an empty retirement backend.
 
 ```bash
 DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 state list
