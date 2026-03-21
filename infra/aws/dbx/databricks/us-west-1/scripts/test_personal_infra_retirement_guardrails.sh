@@ -21,6 +21,7 @@ if "$SCRIPTS_DIR/render_personal_infra_retirement_inventory.sh" \
   echo "expected empty retirement state to fail inventory generation" >&2
   exit 1
 fi
+rg -q 'retirement state is empty; refusing to inventory an unqualified or wrong backend' "$tmpdir/empty.err"
 
 if "$SCRIPTS_DIR/render_personal_infra_retirement_inventory.sh" \
   --state-json "$TESTDATA_DIR/retirement-state-sandbox-contamination.json" \
@@ -28,3 +29,4 @@ if "$SCRIPTS_DIR/render_personal_infra_retirement_inventory.sh" \
   echo "expected sandbox-contaminated retirement state to fail inventory generation" >&2
   exit 1
 fi
+rg -q 'retirement state contains sandbox markers; refusing to continue' "$tmpdir/sandbox.err"
