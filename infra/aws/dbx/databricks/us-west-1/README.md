@@ -89,9 +89,16 @@ This branch is sandbox-only for Unity Catalog. It does not expose a mode switch 
 - The bootstrap apply must run first so the workspace ID and metastore assignment come from Terraform state.
 - The post-bootstrap plan is where catalog-name collisions against the assigned metastore are detected.
 
+## Personal Infra Retirement
+
+Retirement-only guidance lives in:
+
+- `personal-infra-retirement.md`
+- `personal-infra-retirement-contract.md`
+
 ## Create-Only Identity Rollout
 
-This rollout assumes the root module created the workspace and wrote its host and ID into Terraform state before any workspace-scoped identity layers are enabled. The legacy file `scenario1.premium-existing.tfvars` is retained only as a filename for operator compatibility; it no longer points at an unmanaged existing workspace.
+This rollout assumes the root module created the workspace and wrote its host and ID into Terraform state before any workspace-scoped identity layers are enabled. The legacy file `scenario1.premium-existing.tfvars` is retained only as retirement-only historical input for the legacy personal-infra workspace.
 
 - Human users must already exist through Okta SCIM before Terraform runs.
 - `identify.tf` manages only additional Databricks groups, memberships, workspace assignments, and entitlements for those existing users.

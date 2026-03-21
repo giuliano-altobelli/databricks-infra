@@ -1,7 +1,6 @@
-# =============================================================================
-# Generic tfvars Reference (Historical Example)
-# =============================================================================
-# Reference only. The sandbox branch is validated only with scenario2.sandbox-create-managed.tfvars.
+# Generic tfvars reference only.
+# Active steady-state work uses scenario2.sandbox-create-managed.tfvars.
+# Legacy personal-infra teardown uses personal-infra-retirement.md.
 
 # -----------------------------------------------------------------------------
 # Required Core Variables
@@ -10,7 +9,7 @@ aws_account_id         = "441735166692"
 region                 = "us-west-2"
 admin_user             = "giulianoaltobelli@gmail.com"
 databricks_account_id  = "535f803e-200e-4ff7-985a-7673a0f53375"
-resource_prefix        = "personal-infra"
+resource_prefix        = "example-workspace"
 
 # -----------------------------------------------------------------------------
 # Workspace Creation
