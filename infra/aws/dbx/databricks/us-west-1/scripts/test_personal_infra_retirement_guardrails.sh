@@ -30,3 +30,21 @@ if "$SCRIPTS_DIR/render_personal_infra_retirement_inventory.sh" \
   exit 1
 fi
 rg -q 'retirement state contains sandbox markers; refusing to continue' "$tmpdir/sandbox.err"
+
+"$SCRIPTS_DIR/verify_personal_infra_retirement_destroy_plan.sh" \
+  --plan-json "$TESTDATA_DIR/retirement-plan-delete-only.json" \
+  >"$tmpdir/delete-only.out"
+
+for fixture in \
+  retirement-plan-empty.json \
+  retirement-plan-mixed-actions.json \
+  retirement-plan-forbidden-metastore.json \
+  retirement-plan-sandbox-contamination.json
+do
+  if "$SCRIPTS_DIR/verify_personal_infra_retirement_destroy_plan.sh" \
+    --plan-json "$TESTDATA_DIR/$fixture" \
+    >"$tmpdir/$fixture.out" 2>"$tmpdir/$fixture.err"; then
+    echo "expected destroy-plan verifier to reject $fixture" >&2
+    exit 1
+  fi
+done
