@@ -99,5 +99,7 @@ DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 te
 Expected:
 
 - the retirement backend `state list` is empty after destroy
+- the operator manually confirms the shared metastore still exists after destroy
+- the operator manually confirms `sandbox-infra` remains assigned to the shared metastore and is still usable after destroy
 - the sandbox plan succeeds and does not propose destructive drift
 - the operator manually confirms the old `personal-infra` workspace no longer exists in the Databricks account UI or API
