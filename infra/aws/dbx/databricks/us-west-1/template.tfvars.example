@@ -13,12 +13,9 @@ databricks_account_id  = "535f803e-200e-4ff7-985a-7673a0f53375"
 resource_prefix        = "personal-infra"
 
 # -----------------------------------------------------------------------------
-# Workspace Selection (reference: existing workspace)
+# Workspace Creation
 # -----------------------------------------------------------------------------
-pricing_tier           = "PREMIUM"
-workspace_source       = "existing"
-existing_workspace_host = "https://dbc-9edb2ce7-da55.cloud.databricks.com"
-existing_workspace_id   = "7474651824071073"
+pricing_tier = "PREMIUM"
 
 # -----------------------------------------------------------------------------
 # Network Configuration
@@ -52,19 +49,14 @@ deployment_name      = null
 databricks_gov_shard = null
 
 # -----------------------------------------------------------------------------
-# Create Workspace Later (optional)
+# Premium managed networking (default)
 # -----------------------------------------------------------------------------
-# Switch to this when you are ready to have Terraform create a workspace.
-# workspace_source        = "create"
-# existing_workspace_host = null
-# existing_workspace_id   = null
-# network_configuration   = "managed"
+# network_configuration = "managed"
 
 # -----------------------------------------------------------------------------
 # Upgrade to Enterprise SRA (optional)
 # -----------------------------------------------------------------------------
-# pricing_tier         = "ENTERPRISE"
-# workspace_source     = "create"
+# pricing_tier          = "ENTERPRISE"
 # network_configuration = "isolated"
 # enable_audit_log_delivery = true
 

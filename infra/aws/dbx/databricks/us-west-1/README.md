@@ -89,9 +89,9 @@ This branch is sandbox-only for Unity Catalog. It does not expose a mode switch 
 - The bootstrap apply must run first so the workspace ID and metastore assignment come from Terraform state.
 - The post-bootstrap plan is where catalog-name collisions against the assigned metastore are detected.
 
-## Existing Workspace Identity Rollout
+## Create-Only Identity Rollout
 
-This rollout is verified only against the existing workspace and existing metastore path in `scenario1.premium-existing.tfvars`.
+This rollout assumes the root module created the workspace and wrote its host and ID into Terraform state before any workspace-scoped identity layers are enabled. The legacy file `scenario1.premium-existing.tfvars` is retained only as a filename for operator compatibility; it no longer points at an unmanaged existing workspace.
 
 - Human users must already exist through Okta SCIM before Terraform runs.
 - `identify.tf` manages only additional Databricks groups, memberships, workspace assignments, and entitlements for those existing users.
@@ -316,7 +316,7 @@ This section provides additional security recommendations to help maintain a str
 2. Install [Terraform](https://developer.hashicorp.com/terraform/downloads).
 3. In `infra/aws/dbx/databricks/us-west-1`, copy `template.tfvars.example` to a new `*.tfvars` file and fill in your values.
 4. If needed, start from `template.enterprise_sra.tfvars.example` for a full-enterprise baseline.
-5. Use the sandbox workflow above and keep `workspace_source`/`pricing_tier` aligned with the selected scenario file.
+5. Use the sandbox workflow above and keep `pricing_tier` and `network_configuration` aligned with the selected scenario file.
 6. Configure the [AWS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration) and [Databricks](https://registry.terraform.io/providers/databricks/databricks/latest/docs#authentication) provider authentication.
 7. Change directory into `infra/aws/dbx/databricks/us-west-1`.
 8. Run `terraform init`.

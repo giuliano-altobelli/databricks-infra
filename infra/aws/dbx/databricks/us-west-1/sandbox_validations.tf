@@ -33,13 +33,10 @@
 #     condition = (
 #       var.resource_prefix == "sandbox-infra" &&
 #       var.pricing_tier == "PREMIUM" &&
-#       var.workspace_source == "create" &&
 #       var.network_configuration == "managed" &&
-#       var.metastore_exists &&
-#       var.existing_workspace_host == null &&
-#       var.existing_workspace_id == null
+#       var.metastore_exists
 #     )
-#     error_message = "Sandbox runs must use sandbox-infra, PREMIUM, workspace_source=create, managed networking, metastore_exists=true, and null existing workspace values."
+#     error_message = "Sandbox runs must use sandbox-infra, PREMIUM, managed networking, and metastore_exists=true."
 #   }
 # }
 

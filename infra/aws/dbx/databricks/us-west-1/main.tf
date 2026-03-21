@@ -48,13 +48,31 @@ module "databricks_mws_workspace" {
   resource_prefix       = var.resource_prefix
   region                = var.region
   deployment_name       = var.deployment_name
+  pricing_tier          = var.pricing_tier
+
+  # Feature gating follows the root-module create-workspace path.
+  enable_customer_managed_network  = local.enable_customer_managed_network
+  enable_customer_managed_keys     = local.enable_customer_managed_keys
+  enable_private_access_settings   = local.enable_enterprise_infra
+  enable_network_policy_attachment = local.enable_network_policy
+  enable_ncc_binding               = local.enable_network_connectivity_configuration
 
   # Network Configuration
-  vpc_id             = var.custom_vpc_id != null ? var.custom_vpc_id : module.vpc[0].vpc_id
-  subnet_ids         = var.custom_private_subnet_ids != null ? var.custom_private_subnet_ids : module.vpc[0].private_subnets
-  security_group_ids = var.custom_sg_id != null ? [var.custom_sg_id] : [aws_security_group.sg[0].id]
-  backend_rest       = var.custom_workspace_vpce_id != null ? var.custom_workspace_vpce_id : aws_vpc_endpoint.backend_rest[0].id
-  backend_relay      = var.custom_relay_vpce_id != null ? var.custom_relay_vpce_id : aws_vpc_endpoint.backend_relay[0].id
+  vpc_id = local.enable_customer_managed_network ? (
+    var.custom_vpc_id != null ? var.custom_vpc_id : module.vpc[0].vpc_id
+  ) : null
+  subnet_ids = local.enable_customer_managed_network ? (
+    var.custom_private_subnet_ids != null ? var.custom_private_subnet_ids : module.vpc[0].private_subnets
+  ) : null
+  security_group_ids = local.enable_customer_managed_network ? (
+    var.custom_sg_id != null ? [var.custom_sg_id] : [aws_security_group.sg[0].id]
+  ) : null
+  backend_rest = local.enable_customer_managed_network ? (
+    var.custom_workspace_vpce_id != null ? var.custom_workspace_vpce_id : aws_vpc_endpoint.backend_rest[0].id
+  ) : null
+  backend_relay = local.enable_customer_managed_network ? (
+    var.custom_relay_vpce_id != null ? var.custom_relay_vpce_id : aws_vpc_endpoint.backend_relay[0].id
+  ) : null
 
   # Cross-Account Role
   cross_account_role_arn = aws_iam_role.cross_account_role.arn
@@ -63,14 +81,14 @@ module "databricks_mws_workspace" {
   bucket_name = aws_s3_bucket.root_storage_bucket.id
 
   # KMS Keys
-  managed_services_key        = aws_kms_key.managed_services.arn
-  workspace_storage_key       = aws_kms_key.workspace_storage.arn
-  managed_services_key_alias  = aws_kms_alias.managed_services_key_alias.name
-  workspace_storage_key_alias = aws_kms_alias.workspace_storage_key_alias.name
+  managed_services_key        = local.enable_customer_managed_keys ? aws_kms_key.managed_services[0].arn : null
+  workspace_storage_key       = local.enable_customer_managed_keys ? aws_kms_key.workspace_storage[0].arn : null
+  managed_services_key_alias  = local.enable_customer_managed_keys ? aws_kms_alias.managed_services_key_alias[0].name : null
+  workspace_storage_key_alias = local.enable_customer_managed_keys ? aws_kms_alias.workspace_storage_key_alias[0].name : null
 
   # Network Connectivity Configuration and Network Policy
-  network_connectivity_configuration_id = module.network_connectivity_configuration.ncc_id
-  network_policy_id                     = module.network_policy.network_policy_id
+  network_connectivity_configuration_id = local.enable_network_connectivity_configuration ? module.network_connectivity_configuration.ncc_id : null
+  network_policy_id                     = local.enable_network_policy ? module.network_policy.network_policy_id : null
 
   depends_on = [module.unity_catalog_metastore_creation, module.network_connectivity_configuration, module.network_policy]
 }
@@ -83,7 +101,7 @@ module "unity_catalog_metastore_assignment" {
   }
 
   metastore_id = module.unity_catalog_metastore_creation.metastore_id
-  workspace_id = module.databricks_mws_workspace.workspace_id
+  workspace_id = local.workspace_id
 
   depends_on = [module.unity_catalog_metastore_creation, module.databricks_mws_workspace]
 }
@@ -95,7 +113,7 @@ module "user_assignment" {
     databricks = databricks.mws
   }
 
-  workspace_id     = module.databricks_mws_workspace.workspace_id
+  workspace_id     = local.workspace_id
   workspace_access = var.admin_user
 
   depends_on = [module.unity_catalog_metastore_assignment, module.databricks_mws_workspace]

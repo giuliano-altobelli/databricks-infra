@@ -44,7 +44,7 @@ resource "aws_kms_key" "workspace_storage" {
         "Sid" : "Allow Databricks to use KMS key for EBS",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : aws_iam_role.cross_account_role[0].arn
+          "AWS" : aws_iam_role.cross_account_role.arn
         },
         "Action" : [
           "kms:Decrypt",

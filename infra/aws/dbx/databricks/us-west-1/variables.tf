@@ -127,41 +127,6 @@ variable "deployment_name" {
   nullable    = true
 }
 
-variable "workspace_source" {
-  description = "Whether to target an existing workspace or create a new one."
-  type        = string
-  default     = "existing"
-
-  validation {
-    condition     = contains(["existing", "create"], var.workspace_source)
-    error_message = "Invalid workspace source. Allowed values are: existing, create."
-  }
-}
-
-variable "existing_workspace_host" {
-  description = "Workspace host URL for an existing workspace."
-  type        = string
-  default     = null
-  nullable    = true
-
-  validation {
-    condition     = var.workspace_source != "existing" || (var.existing_workspace_host != null && trimspace(var.existing_workspace_host) != "")
-    error_message = "existing_workspace_host is required when workspace_source is existing."
-  }
-}
-
-variable "existing_workspace_id" {
-  description = "Workspace ID for an existing workspace."
-  type        = string
-  default     = null
-  nullable    = true
-
-  validation {
-    condition     = var.workspace_source != "existing" || (var.existing_workspace_id != null && trimspace(var.existing_workspace_id) != "")
-    error_message = "existing_workspace_id is required when workspace_source is existing."
-  }
-}
-
 variable "pricing_tier" {
   description = "Databricks pricing tier for workspace creation."
   type        = string
