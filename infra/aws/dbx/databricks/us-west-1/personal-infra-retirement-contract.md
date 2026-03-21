@@ -14,7 +14,7 @@ Only the following current-root-managed addresses are approved for destroy throu
 - `aws_iam_role_policy.cross_account`
 - `aws_s3_bucket.root_storage_bucket`
 - `aws_s3_bucket_versioning.root_bucket_versioning`
-- `aws_s3_bucket_server_side_encryption_configuration.root_storage_bucket_sse_s3`
+- `aws_s3_bucket_server_side_encryption_configuration.root_storage_bucket_sse_s3[0]`
 - `aws_s3_bucket_public_access_block.root_storage_bucket`
 - `aws_s3_bucket_policy.root_bucket_policy`
 - `module.databricks_mws_workspace.null_resource.previous`

@@ -60,7 +60,7 @@ Import only the current-root addresses below, in this order, when each object is
 2. `aws_iam_role_policy.cross_account`
 3. `aws_s3_bucket.root_storage_bucket`
 4. `aws_s3_bucket_versioning.root_bucket_versioning`
-5. `aws_s3_bucket_server_side_encryption_configuration.root_storage_bucket_sse_s3`
+5. `aws_s3_bucket_server_side_encryption_configuration.root_storage_bucket_sse_s3[0]`
 6. `aws_s3_bucket_public_access_block.root_storage_bucket`
 7. `aws_s3_bucket_policy.root_bucket_policy`
 8. `module.databricks_mws_workspace.databricks_mws_credentials.this`

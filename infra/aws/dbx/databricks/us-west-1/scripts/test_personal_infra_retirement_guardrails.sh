@@ -69,6 +69,7 @@ rg -q 'retirement state contains no personal-infra ownership markers; refusing t
   >"$tmpdir/delete-only.out"
 rg -q 'Retirement destroy plan review summary:' "$tmpdir/delete-only.out"
 rg -q -- '- aws_s3_bucket.root_storage_bucket' "$tmpdir/delete-only.out"
+rg -F -q -- '- aws_s3_bucket_server_side_encryption_configuration.root_storage_bucket_sse_s3[0]' "$tmpdir/delete-only.out"
 rg -q -- '- module.databricks_mws_workspace.databricks_mws_workspaces.workspace' "$tmpdir/delete-only.out"
 
 cat >"$tmpdir/retirement-plan-approved-expanded-scope.json" <<'EOF'
