@@ -8,13 +8,6 @@
 - Treat `README.md` files as supporting usage and operator context, not the primary spec, unless the task explicitly says otherwise.
 - Before claiming completion, verify the change against the applicable `SPEC.md`, `ARCHITECTURE.md`, and repo validation steps.
 
-- For any Databricks identity or access-control change, always ask scope before implementation:
-  - Unity Catalog
-  - Account-level
-  - Workspace-level
-  - Or any combination of the above
-- Treat this scope question as required even if a request seems obvious.
-
 ## Terraform: Databricks Provider Configs
 
 - The repo uses multiple **Databricks provider configurations** (same `databricks/databricks` provider plugin) that differ mainly by `host`/API endpoint:
