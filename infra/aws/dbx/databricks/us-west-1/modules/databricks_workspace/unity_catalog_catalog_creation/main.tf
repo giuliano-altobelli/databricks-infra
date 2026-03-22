@@ -5,17 +5,13 @@ locals {
     for principal in var.catalog_reader_principals : trimspace(principal)
   ]
 
-  # Preserve the existing isolated resource names when the legacy caller maps
-  # its old workspace-scoped naming formula into the new interface.
-  legacy_name_compat = var.catalog_name == replace("${var.resource_prefix}-catalog-${var.workspace_id}", "-", "_")
-  resource_name_base = local.legacy_name_compat ? local.aws_safe_catalog_suffix : "${var.resource_prefix}-${local.aws_safe_catalog_suffix}-${var.workspace_id}"
-
+  resource_name_base      = "${var.resource_prefix}-${local.aws_safe_catalog_suffix}-${var.workspace_id}"
   uc_iam_role             = local.resource_name_base
   catalog_bucket_name     = local.resource_name_base
   storage_credential_name = "${local.resource_name_base}-storage-credential"
   external_location_name  = "${local.resource_name_base}-external-location"
-  iam_policy_name         = local.legacy_name_compat ? "${var.resource_prefix}-catalog-policy-${var.workspace_id}" : "${local.resource_name_base}-policy"
-  kms_key_name            = local.legacy_name_compat ? "${var.resource_prefix}-catalog-storage-${var.workspace_id}-key" : "${local.resource_name_base}-storage-key"
+  iam_policy_name         = "${local.resource_name_base}-policy"
+  kms_key_name            = "${local.resource_name_base}-storage-key"
   kms_key_alias_name      = "alias/${local.kms_key_name}"
 
   normalized_additional_catalog_workspace_ids = [
@@ -362,22 +358,12 @@ resource "databricks_default_namespace_setting" "this" {
 
   depends_on = [
     databricks_workspace_binding.workspace_catalog,
-    databricks_grant.workspace_catalog,
+    databricks_grants.workspace_catalog,
   ]
 }
 
-resource "databricks_grant" "workspace_catalog" {
-  count   = var.enabled && var.set_default_namespace ? 1 : 0
-  catalog = databricks_catalog.workspace_catalog[0].name
-
-  principal  = var.catalog_admin_principal
-  privileges = ["ALL_PRIVILEGES"]
-
-  depends_on = [databricks_workspace_binding.workspace_catalog]
-}
-
 resource "databricks_grants" "workspace_catalog" {
-  count   = var.enabled && !var.set_default_namespace ? 1 : 0
+  count   = var.enabled ? 1 : 0
   catalog = databricks_catalog.workspace_catalog[0].name
 
   grant {
@@ -395,87 +381,4 @@ resource "databricks_grants" "workspace_catalog" {
   }
 
   depends_on = [databricks_workspace_binding.workspace_catalog]
-}
-
-moved {
-  from = null_resource.previous
-  to   = null_resource.previous[0]
-}
-
-moved {
-  from = time_sleep.wait_60_seconds
-  to   = time_sleep.wait_60_seconds[0]
-}
-
-moved {
-  from = aws_kms_key.catalog_storage
-  to   = aws_kms_key.catalog_storage[0]
-}
-
-moved {
-  from = aws_kms_alias.catalog_storage_key_alias
-  to   = aws_kms_alias.catalog_storage_key_alias[0]
-}
-
-moved {
-  from = databricks_storage_credential.workspace_catalog_storage_credential
-  to   = databricks_storage_credential.workspace_catalog_storage_credential[0]
-}
-
-moved {
-  from = aws_iam_policy.unity_catalog
-  to   = aws_iam_policy.unity_catalog[0]
-}
-
-moved {
-  from = aws_iam_role.unity_catalog
-  to   = aws_iam_role.unity_catalog[0]
-}
-
-removed {
-  from = aws_iam_policy_attachment.unity_catalog_attach
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-moved {
-  from = aws_s3_bucket.unity_catalog_bucket
-  to   = aws_s3_bucket.unity_catalog_bucket[0]
-}
-
-moved {
-  from = aws_s3_bucket_versioning.unity_catalog_versioning
-  to   = aws_s3_bucket_versioning.unity_catalog_versioning[0]
-}
-
-moved {
-  from = aws_s3_bucket_server_side_encryption_configuration.unity_catalog
-  to   = aws_s3_bucket_server_side_encryption_configuration.unity_catalog[0]
-}
-
-moved {
-  from = aws_s3_bucket_public_access_block.unity_catalog
-  to   = aws_s3_bucket_public_access_block.unity_catalog[0]
-}
-
-moved {
-  from = databricks_external_location.workspace_catalog_external_location
-  to   = databricks_external_location.workspace_catalog_external_location[0]
-}
-
-moved {
-  from = databricks_catalog.workspace_catalog
-  to   = databricks_catalog.workspace_catalog[0]
-}
-
-moved {
-  from = databricks_default_namespace_setting.this
-  to   = databricks_default_namespace_setting.this[0]
-}
-
-moved {
-  from = databricks_grant.workspace_catalog
-  to   = databricks_grant.workspace_catalog[0]
 }

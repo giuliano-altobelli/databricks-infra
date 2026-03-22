@@ -8,7 +8,7 @@
 ## Scope
 
 - In scope:
-  - Creating Databricks Unity Catalog storage credentials from pre-existing AWS IAM role ARNs
+  - Creating Databricks Unity Catalog storage credentials from caller-supplied AWS IAM role ARNs
   - Creating Databricks Unity Catalog external locations that reference those credentials
   - Managing authoritative `databricks_grants` ACLs for the managed storage credentials and external locations
   - Managing explicit `databricks_workspace_binding` resources when isolation mode is workspace-restricted

@@ -2,7 +2,7 @@
 
 This module manages workspace-scoped Databricks Unity Catalog S3 storage credentials and external locations, plus optional authoritative grants and explicit workspace bindings.
 
-It is intentionally Databricks-only. The caller supplies pre-existing AWS IAM role ARNs and S3 URLs, while the module exposes Databricks-generated trust outputs such as `external_id` and `unity_catalog_iam_arn` so AWS IAM trust can be patched in a separate stack when needed.
+It is intentionally Databricks-only. The caller supplies AWS IAM role ARNs and S3 URLs, while the module exposes Databricks-generated trust outputs such as `external_id` and `unity_catalog_iam_arn` so AWS IAM trust can be patched in a separate stack when needed.
 
 ## Usage
 

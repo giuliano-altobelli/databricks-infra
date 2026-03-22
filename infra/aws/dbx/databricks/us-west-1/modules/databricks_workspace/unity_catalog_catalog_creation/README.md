@@ -1,6 +1,6 @@
 # Unity Catalog Catalog Creation Module
 
-This module's approved target interface is a generic single-catalog contract for creating one AWS-backed, workspace-isolated Unity Catalog catalog. It is the reusable unit behind the governed catalog rollout and remains compatible with the legacy isolated caller by mapping that caller's historical naming formula into `catalog_name`.
+This module's approved target interface is a generic single-catalog contract for creating one AWS-backed, workspace-isolated Unity Catalog catalog. It is the reusable unit behind the governed catalog rollout.
 
 ## Usage
 
@@ -45,12 +45,10 @@ module "revenue_catalog" {
 
 ## Grant Ownership
 
-- Governed catalogs manage authoritative catalog grants through `databricks_grants`.
+- Catalog grants are authoritative through `databricks_grants`.
 - `catalog_admin_principal` receives `ALL_PRIVILEGES`.
 - Each principal in `catalog_reader_principals` receives `USE_CATALOG`.
-- The legacy isolated caller preserves its existing `databricks_grant` state shape and additive behavior for the bootstrap/admin principal, so out-of-band grants remain legacy-compatible on that path.
-- Legacy/default-namespace mode (`set_default_namespace = true`) intentionally manages only the admin bootstrap grant. In that mode, `catalog_reader_principals` must be empty.
-- The governed root caller defaults this principal to `Platform Admins`. The legacy isolated caller remains compatible by passing its existing admin principal instead.
+- `set_default_namespace` only changes the workspace default namespace; it does not change grant ownership.
 
 ## Outputs
 
@@ -66,9 +64,3 @@ The module exposes scalar outputs that the root governed-catalog `catalogs` map 
 - `kms_key_arn`
 
 When `enabled = false`, the module creates no resources and every scalar output resolves to `null`.
-
-## Legacy Compatibility
-
-- The legacy isolated root caller can keep its existing naming and state behavior by passing the old derived isolated catalog name through `catalog_name`.
-- The legacy isolated caller also preserves its explicit default-namespace behavior by passing `set_default_namespace = true`, which the module uses as the legacy grant/default-namespace discriminator.
-- During coexistence, the governed `catalogs_config.tf` path is the preferred entrypoint for new governed catalog work, while the legacy isolated caller remains available for backward compatibility and later archival.

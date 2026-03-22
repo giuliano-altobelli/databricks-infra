@@ -13,7 +13,6 @@
   - workspace-level Databricks provider only
   - optional extra isolated `workspace_ids`
   - no open/shared mode in this change
-  - legacy isolated caller must preserve names and state shape
   - optional default-namespace change only when `set_default_namespace = true`
   - deterministic scalar outputs for downstream root aggregation
 - Out of scope:
@@ -21,12 +20,11 @@
   - schema, table, volume, or object provisioning
   - schema-level or object-level grants
   - account-level Databricks resources or `databricks.mws`
-  - replacing or deleting the legacy isolated root caller in this change
 
 ## Current Stack Usage
 
-- The existing isolated path in [main.tf](/Users/giulianoaltobelli/workbench/git-projects/databricks-infra/infra/aws/dbx/databricks/us-west-1/main.tf) calls this module once and wires the workspace-scoped `databricks.created_workspace` provider alias.
-- The governed catalog rollout adds a new root caller in `catalogs_config.tf` that fans out one module instance per derived catalog while preserving the legacy isolated caller for backward compatibility.
+- The module is workspace-scoped and wired explicitly to `databricks.created_workspace` by root callers.
+- The governed catalog path in `catalogs_config.tf` fans out one module instance per derived catalog when that root path is enabled.
 - Root callers must keep the baseline dependency contract `depends_on = [module.unity_catalog_metastore_assignment, module.users_groups]` and extend it rather than replacing it when later work adds more prerequisites.
 
 ## Interfaces
@@ -102,13 +100,11 @@
   - the governed path manages catalog grants authoritatively through `databricks_grants`
   - `catalog_admin_principal` receives `ALL_PRIVILEGES`
   - each entry in `catalog_reader_principals` receives `USE_CATALOG`
-  - the legacy isolated path preserves its existing `databricks_grant` state shape and additive grant semantics by continuing to manage only the legacy bootstrap principal grant
-  - out-of-band catalog grants are not preserved on governed catalogs, but legacy isolated catalogs retain the legacy non-authoritative behavior until that path is archived
+  - `set_default_namespace` only changes the workspace default namespace and does not alter grant ownership
 
 ## Constraints and Failure Modes
 
 - `catalog_name` is the stable single-catalog identity for Databricks resources and derived AWS-safe names. Changing it changes managed object identities.
-- The module must preserve legacy isolated caller names, Terraform addresses, and state shape when that caller is remapped to the generic interface.
 - The module must not introduce open/shared catalog mode in this rollout.
 - Duplicate workspace-binding tuples must fail clearly rather than being silently deduplicated.
 - Generated S3, IAM, KMS, and Databricks identifiers must fail early if they exceed provider-specific naming rules or length limits.
@@ -124,7 +120,6 @@
   - blank `catalog_name` when enabled
   - blank `catalog_admin_principal` when enabled
   - blank or duplicate `catalog_reader_principals` entries when enabled
-  - non-empty `catalog_reader_principals` when `set_default_namespace = true`
   - blank or non-numeric `workspace_id` when enabled
   - blank or non-numeric entries in `workspace_ids`
   - duplicate workspace-binding tuples
@@ -136,5 +131,5 @@
   - `terraform -chdir=infra/aws/dbx/databricks/us-west-1 fmt -recursive`
   - root verification from `infra/aws/dbx/databricks/us-west-1`:
     - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 validate`
-    - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -var-file=scenario1.premium-existing.tfvars`
+    - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -var-file=terraform.tfvars`
     - exercise the governed fan-out in a scratch copy or temporary local edit by adding a minimal additional non-`personal` `local.governed_catalog_domains` example alongside the checked-in `personal` catalog baseline

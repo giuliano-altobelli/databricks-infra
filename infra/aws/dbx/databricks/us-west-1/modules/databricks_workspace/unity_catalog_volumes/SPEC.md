@@ -61,7 +61,7 @@
 - duplicate grant tuples and duplicate fully qualified volume identities must fail clearly
 - the provider does not expose force-delete behavior for volumes, so the module cannot override conservative deletion semantics
 - Stable caller keys are the Terraform identity for managed volumes. Renaming a key changes the Terraform address even if the Databricks volume name stays the same.
-- The module references pre-existing catalog, schema, and external-location paths by name or URI only. Callers must enforce prerequisite ordering when those objects are managed in the same root stack.
+- The module references catalog, schema, and external-location paths by name or URI only. Callers must enforce prerequisite ordering when those objects are managed in the same root stack.
 - Supported grant privileges are limited to `ALL_PRIVILEGES`, `APPLY_TAG`, `MANAGE`, `READ_VOLUME`, and `WRITE_VOLUME`.
 
 ## Validation
