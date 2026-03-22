@@ -132,9 +132,41 @@ module "log_delivery" {
   aws_assume_partition  = local.assume_role_partition
 }
 
+# module "users_groups" {
+#   source = "./modules/databricks_identity/users_groups"
+
+#   providers = {
+#     databricks.mws       = databricks.mws
+#     databricks.workspace = databricks.created_workspace
+#   }
+
+#   workspace_id = local.workspace_id
+#   groups       = local.identity_groups
+#   users        = local.identity_users
+
+#   depends_on = [
+#     module.unity_catalog_metastore_assignment,
+#     module.user_assignment,
+#   ]
+# }
+
 # =============================================================================
 # Databricks Workspace Modules
 # =============================================================================
+
+# Restrictive Root Buckt Policy
+module "restrictive_root_bucket" {
+  source = "./modules/databricks_workspace/restrictive_root_bucket"
+  providers = {
+    aws = aws
+  }
+
+  databricks_account_id = var.databricks_account_id
+  aws_partition         = local.computed_aws_partition
+  workspace_id          = module.databricks_mws_workspace.workspace_id
+  region_name           = local.region_name[var.region]
+  root_s3_bucket        = "${var.resource_prefix}-workspace-root-storage"
+}
 
 # # Creates a Workspace Isolated Catalog
 # module "unity_catalog_catalog_creation" {
@@ -154,21 +186,6 @@ module "log_delivery" {
 #   user_workspace_catalog_admin = var.admin_user
 
 #   depends_on = [module.unity_catalog_metastore_assignment]
-# }
-
-# # Restrictive Root Buckt Policy
-# module "restrictive_root_bucket" {
-#   source = "./modules/databricks_workspace/restrictive_root_bucket"
-#   providers = {
-#     aws = aws
-#   }
-
-#   databricks_account_id = var.databricks_account_id
-#   aws_partition         = local.computed_aws_partition
-#   databricks_gov_shard  = var.databricks_gov_shard
-#   workspace_id          = module.databricks_mws_workspace.workspace_id
-#   region_name           = var.databricks_gov_shard == "dod" ? var.region_name_config[var.region].secondary_name : var.region_name_config[var.region].primary_name
-#   root_s3_bucket        = "${var.resource_prefix}-workspace-root-storage"
 # }
 
 # # Disable legacy settings like Hive Metastore, Disables Databricks Runtime prior to 13.3 LTS, DBFS, DBFS Mounts,etc.

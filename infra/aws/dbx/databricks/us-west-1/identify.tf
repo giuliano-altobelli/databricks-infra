@@ -44,24 +44,4 @@
 #   #   user_key => user
 #   #   if lower(trimspace(user.user_name)) != local.bootstrap_admin_user
 #   # }
-
-#   # Unity Catalog grants move to phase 2 and phase 3 of this rollout.
-# }
-
-# module "users_groups" {
-#   source = "./modules/databricks_identity/users_groups"
-
-#   providers = {
-#     databricks.mws       = databricks.mws
-#     databricks.workspace = databricks.created_workspace
-#   }
-
-#   workspace_id = local.workspace_id
-#   groups       = local.identity_groups
-#   users        = local.identity_users
-
-#   depends_on = [
-#     module.unity_catalog_metastore_assignment,
-#     module.user_assignment,
-#   ]
 # }
