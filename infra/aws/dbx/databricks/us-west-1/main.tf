@@ -132,6 +132,14 @@ module "log_delivery" {
   aws_assume_partition  = local.assume_role_partition
 }
 
+# =============================================================================
+# Databricks Account/Workspace Modules
+# =============================================================================
+
+# Account identity exists first
+# The principal is assigned to the workspace
+# Workspace entitlements are applied
+# Users and Groups are account wide, but this module doesn't create users only groups
 # module "users_groups" {
 #   source = "./modules/databricks_identity/users_groups"
 

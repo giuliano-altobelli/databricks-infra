@@ -14,6 +14,15 @@
 #         workspace_access      = true
 #       }
 #     }
+#     sandbox_data_engineers = {
+#       display_name          = "Sandbox Data Engineers"
+#       workspace_permissions = ["USER"]
+#       entitlements = {
+#         allow_cluster_create  = true
+#         databricks_sql_access = true
+#         workspace_access      = true
+#       }
+#     }
 #   }
 
 #   # Existing human users must already be provisioned by Okta SCIM before
@@ -24,6 +33,15 @@
 #     giuliano = {
 #       user_name = "giulianoaltobelli@gmail.com"
 #       groups    = ["platform_admins"]
+#       entitlements = {
+#         allow_cluster_create  = true
+#         databricks_sql_access = true
+#         workspace_access      = true
+#       }
+#     }
+#     galtobelli = {
+#       user_name = "giulianoaltobelli@outlook.com"
+#       groups    = ["sandbox_data_engineers"]
 #       entitlements = {
 #         allow_cluster_create  = true
 #         databricks_sql_access = true
