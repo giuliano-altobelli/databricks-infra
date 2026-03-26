@@ -69,11 +69,24 @@ Catalog naming:
 Schema naming:
 
 - One schema per user: `personal.<user_key>`
-- `<user_key>` comes from the stable keys in Terraform `local.identity_users` (example: key `jane_doe` → `personal.jane_doe`)
+- `<user_key>` comes from the user's normalized email local part after SCIM provisioning and workspace membership in `okta-databricks-users` (example: `jane.doe@company.com` -> `personal.jane_doe`)
 
 Examples:
 
 - Personal build artifact: `personal.jane_doe.customer_dim_candidate`
+
+Personal schema data flow:
+
+1. Okta access approval
+2. SCIM provisions the user in Databricks
+3. The user exists at the Databricks account level and workspace level
+4. The user is a member of the workspace-level `okta-databricks-users` group
+5. Terraform reads live membership from that group
+6. Terraform looks up each member's Databricks user record
+7. Terraform derives `<user_key>` from the user's normalized email local part
+8. Terraform materializes `personal.<user_key>`
+9. `databricks_schema` creates the schema
+10. `databricks_grants` applies the schema access policy
 
 ## Identity + Access Control Model
 
@@ -136,8 +149,8 @@ One service principal used by CI for publishing into governed production layer s
 
 For each user `u`:
 
-- Terraform creates `personal.u`.
-- `u` is the owner (or is granted `ALL_PRIVILEGES`) on `personal.u`.
+- Terraform creates `personal.<user_key>` for each SCIM-provisioned user present in the workspace-level `okta-databricks-users` group.
+- The corresponding user is the owner, or is granted `ALL_PRIVILEGES`, on `personal.<user_key>`.
 - No other principals receive access by default (admins retain break-glass access as needed).
 
 #### Workspace default namespace
@@ -158,7 +171,7 @@ Planned declarative inputs:
 - Domain read principals per domain
 - UAT promotion service principal identifier (for `uat` write grants)
 - Release service principal identifier (for production layer write grants)
-- Personal schema user keys: derived from `keys(local.identity_users)`
+- Personal schema user keys: derived from live membership in the workspace-level `okta-databricks-users` group
 
 Planned resources:
 
