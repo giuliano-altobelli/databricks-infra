@@ -40,12 +40,12 @@ module "aws_secrets" {
   }
 
   region             = "us-west-1"
-  name_prefix        = "/databricks/identity/service-principals"
+  name_prefix        = "databricks/service-principals"
   service_principals  = local.service_principals
 }
 ```
 
-The secret name for `uat_promotion` becomes `/databricks/identity/service-principals/uat_promotion`.
+The secret name for `uat_promotion` becomes `databricks/service-principals/uat_promotion`.
 
 ## Usage Notes
 
