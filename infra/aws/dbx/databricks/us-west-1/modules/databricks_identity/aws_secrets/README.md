@@ -8,13 +8,26 @@ Use the same stable service-principal keys you already use for identity provisio
 
 ```hcl
 locals {
-  service_principals = {
+  service_principals_identity = {
     uat_promotion = {
-      display_name = "UAT Promotion SP"
+      display_name       = "UAT Promotion SP"
+      principal_scope    = "account"
+      workspace_assignment = {
+        enabled     = true
+        permissions = ["USER"]
+      }
     }
 
     workspace_agent = {
-      display_name = "Workspace Agent SP"
+      display_name    = "Workspace Agent SP"
+      principal_scope = "workspace"
+    }
+  }
+
+  service_principals = {
+    for principal_key, principal in local.service_principals_identity :
+    principal_key => {
+      display_name = principal.display_name
     }
   }
 }
@@ -28,7 +41,7 @@ module "aws_secrets" {
 
   region             = "us-west-1"
   name_prefix        = "/databricks/identity/service-principals"
-  service_principals = local.service_principals
+  service_principals  = local.service_principals
 }
 ```
 
