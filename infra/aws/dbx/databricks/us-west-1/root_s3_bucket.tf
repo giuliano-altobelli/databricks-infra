@@ -34,7 +34,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "root_storage_buck
   bucket = aws_s3_bucket.root_storage_bucket.bucket
   rule {
     blocked_encryption_types = ["NONE"]
-    bucket_key_enabled = true
+    bucket_key_enabled       = true
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
