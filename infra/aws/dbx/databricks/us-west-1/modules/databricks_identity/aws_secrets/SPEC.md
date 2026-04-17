@@ -35,6 +35,7 @@
 Contract details:
 
 - Caller-defined stable map keys are the Terraform addresses and output keys.
+- Principal keys are caller-owned identifiers already normalized for use in AWS secret names, and the module must not internally rename or normalize them.
 - Empty or whitespace-only principal keys must fail validation.
 - Changing `name_prefix` or principal keys is replacement-by-contract.
 
@@ -62,4 +63,8 @@ Contract details:
 - `terraform fmt -recursive`
 - Isolated harness `terraform validate`
 - Root `terraform validate`
-- Root `terraform plan -var-file=terraform.tfvars`
+- Root scenario plan using the repo-required command pattern:
+
+```bash
+DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 plan -var-file=terraform.tfvars
+```
