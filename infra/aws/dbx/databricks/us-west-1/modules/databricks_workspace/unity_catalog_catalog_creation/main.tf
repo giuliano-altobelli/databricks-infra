@@ -268,6 +268,7 @@ resource "databricks_external_location" "workspace_catalog_external_location" {
   url             = "s3://${local.catalog_bucket_name}/"
   credential_name = databricks_storage_credential.workspace_catalog_storage_credential[0].name
   comment         = "External location for catalog ${var.catalog_name}"
+  force_destroy   = true
   isolation_mode  = "ISOLATION_MODE_ISOLATED"
 
   depends_on = [

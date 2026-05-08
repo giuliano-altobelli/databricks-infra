@@ -35,6 +35,7 @@ module "unity_catalog_storage_locations" {
       name           = "bronze-raw-root"
       url            = "s3://company-bronze-raw/"
       credential_key = "bronze_raw"
+      force_destroy  = true
       grants = [
         {
           principal  = "Data Engineers"
@@ -69,3 +70,7 @@ Privilege guidance for the example configurations:
 If the AWS IAM trust policy has not yet been patched with the Databricks-generated `external_id`, first create the storage credential with `skip_validation = true`.
 
 After the credential exists, use the module output `storage_credentials[*].external_id` and `storage_credentials[*].unity_catalog_iam_arn` to update IAM trust externally, then switch `skip_validation` back to `false` before relying on the credential for external locations.
+
+## Teardown
+
+Set `external_locations[*].force_destroy = true` only for teardown paths where Databricks should force-delete the external location after managed dependents are gone. Terraform-managed volumes, schemas, and catalogs that use the location must still be destroyed first.

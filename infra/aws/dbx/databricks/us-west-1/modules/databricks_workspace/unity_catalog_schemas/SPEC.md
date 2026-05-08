@@ -65,6 +65,7 @@
 - Stable caller keys are the Terraform identity for managed schemas. Renaming a key changes the Terraform address even if the Databricks schema name stays the same.
 - Grants are authoritative when declared. Out-of-band schema grants on managed schemas are not preserved.
 - Because grants are authoritative, omitting a principal from a schema's explicit `grants` removes that schema access through this Terraform-managed path; this is how schema-specific exclusions are modeled.
+- The module intentionally does not expose `databricks_schema.force_destroy`; forced schema deletion can remove child Unity Catalog objects such as managed or external volumes while their Terraform resources remain in state. Terraform-managed child volumes must be removed from Terraform first.
 - Supported schema grant privileges are limited to `ALL_PRIVILEGES` and `USE_SCHEMA`.
 - Expected runtime failures outside static validation include missing catalogs, missing metastore assignment, or provider/runtime rejection of an otherwise syntactically valid request.
 

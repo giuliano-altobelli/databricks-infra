@@ -14,6 +14,7 @@
   - optional extra isolated `workspace_ids`
   - no open/shared mode in this change
   - optional default-namespace change only when `set_default_namespace = true`
+  - forced deletion of the catalog bootstrap external location after managed storage dependents have been removed
   - deterministic scalar outputs for downstream root aggregation
 - Out of scope:
   - multi-catalog fan-out from one module invocation
@@ -101,6 +102,8 @@
   - `catalog_admin_principal` receives `ALL_PRIVILEGES`
   - each entry in `catalog_reader_principals` receives `USE_CATALOG`
   - `set_default_namespace` only changes the workspace default namespace and does not alter grant ownership
+- Teardown behavior:
+  - the module sets `force_destroy = true` on the catalog bootstrap external location so Databricks can delete the location after volumes, schemas, and the catalog are gone and Unity Catalog can no longer purge managed storage data under that path
 
 ## Constraints and Failure Modes
 
@@ -113,6 +116,7 @@
   - external location creation fails because bucket or IAM permissions are incomplete
   - catalog creation fails because the workspace is not assigned to the target metastore
   - authoritative grant application removes unexpected out-of-band catalog access
+  - external location deletion can fail if managed child objects still exist; Terraform-managed child volumes and schemas must be destroyed before the catalog module
 
 ## Validation
 
@@ -125,9 +129,11 @@
   - duplicate workspace-binding tuples
   - invalid generated S3 bucket names
   - generated AWS or Databricks identifiers that exceed provider name limits
+  - external-location `force_destroy` passthrough via `terraform test`
 - Verification commands:
   - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_catalog_creation init -backend=false`
   - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_catalog_creation validate`
+  - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_catalog_creation test`
   - `terraform -chdir=infra/aws/dbx/databricks/us-west-1 fmt -recursive`
   - root verification from `infra/aws/dbx/databricks/us-west-1`:
     - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 validate`

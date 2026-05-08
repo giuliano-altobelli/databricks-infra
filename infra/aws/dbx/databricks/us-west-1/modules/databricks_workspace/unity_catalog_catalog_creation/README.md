@@ -43,6 +43,10 @@ module "revenue_catalog" {
 - `workspace_ids` adds extra isolated bindings for other workspaces on the same metastore.
 - This interface does not expose open/shared visibility in the governed catalog rollout.
 
+## Teardown
+
+The catalog bootstrap external location uses `force_destroy = true` so Databricks can delete the external location after Terraform-managed volumes, schemas, and the catalog have already been destroyed. This does not replace destroying Terraform-managed child resources first.
+
 ## Grant Ownership
 
 - Catalog grants are authoritative through `databricks_grants`.

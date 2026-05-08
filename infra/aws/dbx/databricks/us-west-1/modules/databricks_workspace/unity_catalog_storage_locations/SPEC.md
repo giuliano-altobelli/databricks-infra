@@ -51,6 +51,7 @@
     - `owner` (`optional(string)`)
     - `read_only` (`optional(bool, false)`)
     - `skip_validation` (`optional(bool, false)`)
+    - `force_destroy` (`optional(bool, false)`)
     - `fallback` (`optional(bool, false)`)
     - `encryption_details` (`optional(object)`) with AWS `sse_encryption_details`
     - `workspace_access_mode` (`optional(string, "ISOLATION_MODE_ISOLATED")`)
@@ -104,11 +105,13 @@
 - Grant entries must not contain empty privilege lists.
 - `databricks_grants` is authoritative for each managed securable. Out-of-band grants on those securables are not preserved.
 - The module does not wait for or patch AWS IAM trust updates. If trust is not ready yet, callers must use `skip_validation = true`, update IAM externally, then re-enable validation.
+- External location `force_destroy = true` is an explicit caller opt-in for teardown paths where Databricks requires force deletion after managed dependents are gone.
 
 ## Validation
 
 - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_storage_locations init -backend=false`
 - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_storage_locations validate`
+- `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_storage_locations test`
 - `terraform -chdir=infra/aws/dbx/databricks/us-west-1 fmt -recursive`
 - Root verification from `infra/aws/dbx/databricks/us-west-1`:
   - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 validate`

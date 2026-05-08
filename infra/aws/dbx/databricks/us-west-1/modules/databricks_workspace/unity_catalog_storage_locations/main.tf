@@ -217,6 +217,7 @@ resource "databricks_external_location" "this" {
   comment         = try(each.value.comment, null)
   read_only       = each.value.read_only
   skip_validation = each.value.skip_validation
+  force_destroy   = each.value.force_destroy
   fallback        = each.value.fallback
   isolation_mode  = each.value.workspace_access_mode
 
