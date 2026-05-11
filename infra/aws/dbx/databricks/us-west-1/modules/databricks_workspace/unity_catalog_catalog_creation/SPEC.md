@@ -104,6 +104,7 @@
   - `set_default_namespace` only changes the workspace default namespace and does not alter grant ownership
 - Teardown behavior:
   - the module sets `force_destroy = true` on the catalog bootstrap external location so Databricks can delete the location after volumes, schemas, and the catalog are gone and Unity Catalog can no longer purge managed storage data under that path
+  - existing module instances must receive this setting through an apply before the module is removed or disabled; otherwise Terraform may destroy the external location from prior state that still has `force_destroy = false`
 
 ## Constraints and Failure Modes
 
@@ -117,6 +118,7 @@
   - catalog creation fails because the workspace is not assigned to the target metastore
   - authoritative grant application removes unexpected out-of-band catalog access
   - external location deletion can fail if managed child objects still exist; Terraform-managed child volumes and schemas must be destroyed before the catalog module
+  - external location deletion can also fail if the resource is destroyed from old Terraform state that predates `force_destroy = true`
 
 ## Validation
 

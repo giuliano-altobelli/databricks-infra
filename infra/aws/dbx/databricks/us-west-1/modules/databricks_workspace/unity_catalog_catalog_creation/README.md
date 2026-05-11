@@ -47,6 +47,8 @@ module "revenue_catalog" {
 
 The catalog bootstrap external location uses `force_destroy = true` so Databricks can delete the external location after Terraform-managed volumes, schemas, and the catalog have already been destroyed. This does not replace destroying Terraform-managed child resources first.
 
+If an existing catalog module instance was created before this setting existed, apply the module update while the catalog module is still enabled before removing or disabling the module. Destroying from old state can still use the previous `force_destroy = false` value.
+
 ## Grant Ownership
 
 - Catalog grants are authoritative through `databricks_grants`.

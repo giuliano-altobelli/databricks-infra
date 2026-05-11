@@ -106,6 +106,7 @@
 - `databricks_grants` is authoritative for each managed securable. Out-of-band grants on those securables are not preserved.
 - The module does not wait for or patch AWS IAM trust updates. If trust is not ready yet, callers must use `skip_validation = true`, update IAM externally, then re-enable validation.
 - External location `force_destroy = true` is an explicit caller opt-in for teardown paths where Databricks requires force deletion after managed dependents are gone.
+- Existing external locations must receive `force_destroy = true` through an apply before they are removed from configuration; otherwise Terraform may destroy them from prior state that still has `force_destroy = false`.
 
 ## Validation
 

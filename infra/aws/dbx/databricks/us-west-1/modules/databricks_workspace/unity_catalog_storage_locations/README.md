@@ -74,3 +74,5 @@ After the credential exists, use the module output `storage_credentials[*].exter
 ## Teardown
 
 Set `external_locations[*].force_destroy = true` only for teardown paths where Databricks should force-delete the external location after managed dependents are gone. Terraform-managed volumes, schemas, and catalogs that use the location must still be destroyed first.
+
+For existing external locations, stage this as an update before deletion: keep the external location in configuration, set `force_destroy = true`, apply that change, and only then remove or destroy the external location. Removing it from configuration in the same change can destroy from old state where `force_destroy` is still `false`.
