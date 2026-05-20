@@ -377,7 +377,7 @@ resource "databricks_grants" "workspace_catalog" {
 
     content {
       principal  = grant.value
-      privileges = ["USE_CATALOG"]
+      privileges = ["USE_CATALOG", "EXTERNAL USE SCHEMA"]
     }
   }
 

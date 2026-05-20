@@ -100,7 +100,7 @@
 - Grant behavior:
   - the governed path manages catalog grants authoritatively through `databricks_grants`
   - `catalog_admin_principal` receives `ALL_PRIVILEGES`
-  - each entry in `catalog_reader_principals` receives `USE_CATALOG`
+  - each entry in `catalog_reader_principals` receives `USE_CATALOG` and `EXTERNAL USE SCHEMA`
   - `set_default_namespace` only changes the workspace default namespace and does not alter grant ownership
 - Teardown behavior:
   - the module sets `force_destroy = true` on the catalog bootstrap external location so Databricks can delete the location after volumes, schemas, and the catalog are gone and Unity Catalog can no longer purge managed storage data under that path
@@ -117,6 +117,7 @@
   - external location creation fails because bucket or IAM permissions are incomplete
   - catalog creation fails because the workspace is not assigned to the target metastore
   - authoritative grant application removes unexpected out-of-band catalog access
+  - `EXTERNAL USE SCHEMA` grant application fails if the caller is not allowed to grant external schema access at catalog scope
   - external location deletion can fail if managed child objects still exist; Terraform-managed child volumes and schemas must be destroyed before the catalog module
   - external location deletion can also fail if the resource is destroyed from old Terraform state that predates `force_destroy = true`
 
@@ -132,6 +133,7 @@
   - invalid generated S3 bucket names
   - generated AWS or Databricks identifiers that exceed provider name limits
   - external-location `force_destroy` passthrough via `terraform test`
+  - catalog reader grants include both `USE_CATALOG` and `EXTERNAL USE SCHEMA` via `terraform test`
 - Verification commands:
   - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_catalog_creation init -backend=false`
   - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_catalog_creation validate`

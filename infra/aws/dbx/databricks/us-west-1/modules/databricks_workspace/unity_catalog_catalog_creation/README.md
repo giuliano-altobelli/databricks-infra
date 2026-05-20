@@ -53,7 +53,7 @@ If an existing catalog module instance was created before this setting existed, 
 
 - Catalog grants are authoritative through `databricks_grants`.
 - `catalog_admin_principal` receives `ALL_PRIVILEGES`.
-- Each principal in `catalog_reader_principals` receives `USE_CATALOG`.
+- Each principal in `catalog_reader_principals` receives `USE_CATALOG` and `EXTERNAL USE SCHEMA`.
 - `set_default_namespace` only changes the workspace default namespace; it does not change grant ownership.
 
 ## Outputs

@@ -120,6 +120,14 @@ _Avoid_: Broadest possible scope
 The rule that a principal with baseline query access sees zero protected rows unless an access mapping row grants current effective access.
 _Avoid_: Default allow
 
+**External Unity Catalog Delta Read**:
+A read path where a non-Databricks engine uses Unity Catalog to resolve and access governed Delta table data instead of directly targeting cloud storage paths.
+_Avoid_: Raw S3 Delta read, SQL result ingestion
+
+**External Reader Principal**:
+A user or service principal authorized to read Unity Catalog-governed data from outside Databricks through Unity Catalog external access.
+_Avoid_: Shared user token, raw storage credential
+
 ## Relationships
 
 - A **Unity Catalog Grant** gives a principal baseline access before an **ABAC Policy** further restricts rows or columns.
@@ -145,6 +153,8 @@ _Avoid_: Default allow
 - Reusable **Policy-Supporting UDFs** live in `prod_security.policies`; domain-specific UDFs require a future scoped spec.
 - **Security/Platform Teams** own **Access-Control Primitives**; **Application Teams** own data production and domain logic inside governed tables.
 - A **Workspace Entitlement** does not grant Unity Catalog data access by itself.
+- An **External Unity Catalog Delta Read** still requires the reader principal to have the necessary **Unity Catalog Grants** on the target catalog, schema, and table.
+- A production **External Unity Catalog Delta Read** should use a service principal as its **External Reader Principal**; human users are for interactive or development reads.
 
 ## Example Dialogue
 
@@ -161,3 +171,5 @@ _Avoid_: Default allow
 - Source and effective access maps are both **Access Mapping Tables** under `prod_security.access_maps.*`; this direction doc does not standardize a separate suffix or namespace.
 - `prod_security.reference.*` may contain broadly useful governance vocabulary or sensitive policy metadata. Unresolved: visibility requires a leadership decision.
 - Runtime validation promotion blocking for ABAC-governed tables is unresolved and requires a leadership decision.
+- "DuckDB reading Databricks data" can mean either external Delta reads through Unity Catalog or SQL result ingestion through a Databricks SQL warehouse. Resolved for this design: use **External Unity Catalog Delta Read**.
+- "Read data via a user or service principal" can imply shared credentials. Resolved: production reads use a service principal, while human-user reads remain interactive or development access under the user's own identity.
