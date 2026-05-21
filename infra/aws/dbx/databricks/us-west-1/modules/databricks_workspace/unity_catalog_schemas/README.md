@@ -58,4 +58,5 @@ When `enabled = false`, the module creates no resources and returns an empty `sc
 
 - Stable map keys are Terraform addresses. Renaming a key changes the resource address even if the Databricks schema name stays the same.
 - Prefer passing catalog names from upstream module outputs when the catalog is created in the same root stack.
+- Destroy Terraform-managed volumes before schemas. This module intentionally does not expose schema `force_destroy` because forced schema deletion can remove child volumes in Databricks while their Terraform resources remain in state.
 - The `schemas` output behavior is part of the module contract even though it is implemented through the resource graph in `outputs.tf`.

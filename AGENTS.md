@@ -8,13 +8,6 @@
 - Treat `README.md` files as supporting usage and operator context, not the primary spec, unless the task explicitly says otherwise.
 - Before claiming completion, verify the change against the applicable `SPEC.md`, `ARCHITECTURE.md`, and repo validation steps.
 
-- For any Databricks identity or access-control change, always ask scope before implementation:
-  - Unity Catalog
-  - Account-level
-  - Workspace-level
-  - Or any combination of the above
-- Treat this scope question as required even if a request seems obvious.
-
 ## Terraform: Databricks Provider Configs
 
 - The repo uses multiple **Databricks provider configurations** (same `databricks/databricks` provider plugin) that differ mainly by `host`/API endpoint:
@@ -30,9 +23,6 @@
 ## Terraform Scenario Vars
 
 - Use the scenario var files in `infra/aws/dbx/databricks/us-west-1`:
-  - `scenario1.premium-existing.tfvars`: Legacy filename retained; Premium + create workspace + managed networking reference.
-  - `scenario2.premium-create-managed.tfvars`: Premium + create workspace + managed networking.
-  - `scenario3.enterprise-create-isolated.tfvars`: Enterprise + create workspace + isolated networking (full SRA path).
+  - `terraform.tfvars`: Premium + create workspace + managed networking.
 - Use this command pattern for all plan/apply runs:
-  - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 <plan|apply> -var-file=<scenario-file>`
-- If the request is to avoid enterprise/SRA deployment, use scenario 1 or 2 only and do not apply scenario 3 plans.
+  - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 <plan|apply> -var-file=terraform.tfvars`

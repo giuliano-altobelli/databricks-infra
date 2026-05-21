@@ -27,7 +27,7 @@ Rules:
 
 ## Decisions
 
-- Decision: Keep AWS ownership out of this module and accept pre-existing `role_arn` plus `s3://...` URLs only.
+- Decision: Keep AWS ownership out of this module and accept caller-supplied `role_arn` plus `s3://...` URLs only.
 - Rationale: The plan explicitly separates Databricks resource management from companion AWS trust/bucket configuration.
 - Consequences: This module exposes Databricks-generated trust outputs but never creates AWS IAM resources.
 

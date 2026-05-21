@@ -2,7 +2,7 @@
 
 This module manages workspace-scoped Databricks Unity Catalog S3 storage credentials and external locations, plus optional authoritative grants and explicit workspace bindings.
 
-It is intentionally Databricks-only. The caller supplies pre-existing AWS IAM role ARNs and S3 URLs, while the module exposes Databricks-generated trust outputs such as `external_id` and `unity_catalog_iam_arn` so AWS IAM trust can be patched in a separate stack when needed.
+It is intentionally Databricks-only. The caller supplies AWS IAM role ARNs and S3 URLs, while the module exposes Databricks-generated trust outputs such as `external_id` and `unity_catalog_iam_arn` so AWS IAM trust can be patched in a separate stack when needed.
 
 ## Usage
 
@@ -35,6 +35,7 @@ module "unity_catalog_storage_locations" {
       name           = "bronze-raw-root"
       url            = "s3://company-bronze-raw/"
       credential_key = "bronze_raw"
+      force_destroy  = true
       grants = [
         {
           principal  = "Data Engineers"
@@ -69,3 +70,9 @@ Privilege guidance for the example configurations:
 If the AWS IAM trust policy has not yet been patched with the Databricks-generated `external_id`, first create the storage credential with `skip_validation = true`.
 
 After the credential exists, use the module output `storage_credentials[*].external_id` and `storage_credentials[*].unity_catalog_iam_arn` to update IAM trust externally, then switch `skip_validation` back to `false` before relying on the credential for external locations.
+
+## Teardown
+
+Set `external_locations[*].force_destroy = true` only for teardown paths where Databricks should force-delete the external location after managed dependents are gone. Terraform-managed volumes, schemas, and catalogs that use the location must still be destroyed first.
+
+For existing external locations, stage this as an update before deletion: keep the external location in configuration, set `force_destroy = true`, apply that change, and only then remove or destroy the external location. Removing it from configuration in the same change can destroy from old state where `force_destroy` is still `false`.

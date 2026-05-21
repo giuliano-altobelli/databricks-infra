@@ -103,6 +103,7 @@ variable "external_locations" {
     owner           = optional(string)
     read_only       = optional(bool, false)
     skip_validation = optional(bool, false)
+    force_destroy   = optional(bool, false)
     fallback        = optional(bool, false)
     encryption_details = optional(object({
       sse_encryption_details = object({

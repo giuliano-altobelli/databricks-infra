@@ -26,6 +26,17 @@ provider "aws" {
   }
 }
 
+provider "aws" {
+  alias  = "us_west_1"
+  region = var.region
+
+  default_tags {
+    tags = {
+      Resource = var.resource_prefix
+    }
+  }
+}
+
 # Authenticate using environment variables: https://registry.terraform.io/providers/databricks/databricks/latest/docs#argument-reference
 # export DATABRICKS_CLIENT_ID=CLIENT_ID
 # export DATABRICKS_CLIENT_SECRET=CLIENT_SECRET

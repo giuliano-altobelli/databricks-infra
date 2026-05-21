@@ -11,6 +11,14 @@ This repository currently targets a **single Databricks workspace**. Unity Catal
   - `prod_<source>` when `business_area` is empty
   - Standard schemas: `raw`, `base`, `staging`, `final`, plus `uat`
   - Exception: the default catalog `main` may be managed on the governed path with no schemas
+- **Platform governance catalog:** `prod_security`
+  - Reserved for access-control support objects such as ABAC policy UDFs, access mapping tables, governance reference data, and audit evidence
+  - Conceptual schema layout:
+    - `access_maps`: access mapping tables
+    - `access_audit`: approval ledger and change-history tables
+    - `reference`: governance reference tables
+    - `policies`: policy-supporting UDFs/functions
+  - Does not inherit normal governed domain-reader access semantics
 - **Personal development catalog:** `personal`
   - Schemas: `personal.<user_key>` for each user present in the workspace-level `okta-databricks-users` group
   - `<user_key>` is derived from the user's normalized email local part (example: `jane.doe@company.com` -> `jane_doe`)
@@ -20,6 +28,8 @@ Examples:
 - Prod object: `prod_salesforce_revenue.final.customer_dim`
 - Prod object without business area: `prod_hubspot.final.company_dim`
 - Shareable UAT object: `prod_salesforce_revenue.uat.customer_dim_candidate`
+- Platform governance object: `prod_security.access_maps.jira_project_access`
+- Policy-supporting function: `prod_security.policies.can_access_region(...)`
 - Default schema-less governed catalog: `main`
 - Personal build artifact: `personal.jane_doe.customer_dim_candidate`
 
