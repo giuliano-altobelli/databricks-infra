@@ -26,7 +26,7 @@ module "unity_catalog_schemas" {
         }
         {
           principal  = "Revenue Readers"
-          privileges = ["USE_SCHEMA"]
+          privileges = ["USE_SCHEMA", "SELECT"]
         }
       ]
     }
