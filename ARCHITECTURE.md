@@ -92,3 +92,15 @@ Assumption: all workspaces share **one** Unity Catalog metastore.
 - Use workspace-scoped `workspace_id` / `workspace_ids` parameters where appropriate (e.g., metastore assignments and workspace bindings).
 - Use workspace bindings so additional workspaces can “see” the same governed `prod_*` catalogs.
 - Keep the namespace model and UC grants consistent across workspaces.
+
+## External foundation model serving
+
+Databricks model serving endpoints are workspace-scoped. A serving endpoint created in one workspace does not become a metastore-level object, even when the workspace uses a shared Unity Catalog metastore.
+
+- Phase 1 Bedrock external foundation model serving is managed by `infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/bedrock_external_model_endpoints`.
+- The module creates only the workspace model serving endpoint and authoritative endpoint ACLs.
+- The endpoint auth input is currently `instance_profile_arn` because the current root stack provider generation used for this path does not expose `uc_service_credential_name` on the Bedrock external model serving shape used here.
+- Do not create Unity Catalog service credentials in this phase; they would be a partially unused control surface until the endpoint resource can consume them.
+- The recommended future auth object is a Unity Catalog service credential at the shared metastore, optionally workspace-bound when only selected workspaces should use it.
+- Each active workspace that needs `ai_query` access should own its own serving endpoint and endpoint permissions, even when the future auth object is shared at the metastore.
+- Databricks agent serving endpoints are a separate workspace serving shape. They can also be queried through `ai_query`, but they are not part of the Phase 1 Bedrock external foundation model endpoint module.

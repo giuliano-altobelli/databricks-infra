@@ -1,0 +1,43 @@
+# Example opt-in configuration for the Phase 1 Bedrock external model endpoint module.
+# Replace all placeholder values before using this with a live plan/apply.
+
+bedrock_external_model_endpoints_enabled = true
+
+bedrock_external_model_endpoints = {
+  foundation_models = {
+    name                 = "bedrock-foundation-models"
+    aws_region           = "us-west-2"
+    instance_profile_arn = "arn:aws:iam::123456789012:instance-profile/databricks-bedrock"
+
+    served_entities = {
+      claude_sonnet = {
+        name               = "claude_sonnet"
+        task               = "llm/v1/chat"
+        bedrock_provider   = "Anthropic"
+        bedrock_model      = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+        traffic_percentage = 90
+      }
+
+      claude_haiku = {
+        name               = "claude_haiku"
+        task               = "llm/v1/chat"
+        bedrock_provider   = "Anthropic"
+        bedrock_model      = "anthropic.claude-3-haiku-20240307-v1:0"
+        traffic_percentage = 10
+      }
+    }
+
+    permissions = [
+      {
+        principal_type   = "user"
+        principal_name   = "<platform-operator@example.com>"
+        permission_level = "CAN_MANAGE"
+      },
+      {
+        principal_type   = "group"
+        principal_name   = "<ai-query-users-group>"
+        permission_level = "CAN_QUERY"
+      },
+    ]
+  }
+}

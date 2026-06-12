@@ -128,6 +128,18 @@ _Avoid_: Raw S3 Delta read, SQL result ingestion
 A user or service principal authorized to read Unity Catalog-governed data from outside Databricks through Unity Catalog external access.
 _Avoid_: Shared user token, raw storage credential
 
+**Unity Catalog Service Credential**:
+A metastore-scoped Unity Catalog securable that represents cloud-service authentication, such as an AWS IAM role used to reach Amazon Bedrock.
+_Avoid_: Workspace credential, service principal credential, storage credential
+
+**Model Serving Endpoint**:
+A workspace-scoped invocation surface that exposes served models or agents to callers such as Databricks SQL.
+_Avoid_: Metastore object, Unity Catalog securable
+
+**External Foundation Model**:
+A third-party foundation model hosted outside Databricks and reached through a Databricks model serving endpoint.
+_Avoid_: Databricks-hosted foundation model, Unity Catalog model
+
 ## Relationships
 
 - A **Unity Catalog Grant** gives a principal baseline access before an **ABAC Policy** further restricts rows or columns.
@@ -155,11 +167,17 @@ _Avoid_: Shared user token, raw storage credential
 - A **Workspace Entitlement** does not grant Unity Catalog data access by itself.
 - An **External Unity Catalog Delta Read** still requires the reader principal to have the necessary **Unity Catalog Grants** on the target catalog, schema, and table.
 - A production **External Unity Catalog Delta Read** should use a service principal as its **External Reader Principal**; human users are for interactive or development reads.
+- A **Unity Catalog Service Credential** belongs to the shared metastore so it can be governed once and optionally constrained to specific workspaces.
+- A **Model Serving Endpoint** belongs to one workspace because endpoint invocation, endpoint ACLs, and Databricks SQL callers are workspace-scoped.
+- An **External Foundation Model** should use a **Unity Catalog Service Credential** for durable cloud-service authentication when the provider supports that auth path.
 
 ## Example Dialogue
 
 > **Dev:** "Should Jira project access live in an entitlement table?"
 > **Domain expert:** "Call it an **Access Mapping Table** in the **Platform Governance Catalog**. A **Governed Table Tag** declares ABAC participation, while a **Protected Column Tag** identifies the sensitive field used by policy logic."
+
+> **Dev:** "Should Bedrock auth live on each workspace endpoint?"
+> **Domain expert:** "No — make the durable auth object a **Unity Catalog Service Credential** at the shared metastore, then let each workspace own its **Model Serving Endpoint** and endpoint query permissions."
 
 ## Flagged Ambiguities
 
@@ -173,3 +191,5 @@ _Avoid_: Shared user token, raw storage credential
 - Runtime validation promotion blocking for ABAC-governed tables is unresolved and requires a leadership decision.
 - "DuckDB reading Databricks data" can mean either external Delta reads through Unity Catalog or SQL result ingestion through a Databricks SQL warehouse. Resolved for this design: use **External Unity Catalog Delta Read**.
 - "Read data via a user or service principal" can imply shared credentials. Resolved: production reads use a service principal, while human-user reads remain interactive or development access under the user's own identity.
+- "service credential route" can be mistaken for a workspace-local credential or service principal secret. Resolved: use **Unity Catalog Service Credential** for the durable metastore-level Bedrock auth concept.
+- `instance_profile_arn` is a temporary provider-compatibility bridge for Bedrock serving endpoints, not the canonical auth boundary; replace it with **Unity Catalog Service Credential** wiring when provider support is available.

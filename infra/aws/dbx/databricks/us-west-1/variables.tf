@@ -33,6 +33,34 @@ variable "audit_log_delivery_exists" {
   default     = false
 }
 
+variable "bedrock_external_model_endpoints_enabled" {
+  description = "Enable creation of workspace-scoped Bedrock external model serving endpoints."
+  type        = bool
+  default     = false
+}
+
+variable "bedrock_external_model_endpoints" {
+  description = "Bedrock external model serving endpoints keyed by stable caller-defined identifiers."
+  type = map(object({
+    name                 = string
+    aws_region           = string
+    instance_profile_arn = string
+    served_entities = map(object({
+      name               = string
+      task               = string
+      bedrock_provider   = string
+      bedrock_model      = string
+      traffic_percentage = number
+    }))
+    permissions = list(object({
+      principal_type   = string
+      principal_name   = string
+      permission_level = optional(string, "CAN_QUERY")
+    }))
+  }))
+  default = {}
+}
+
 variable "aws_account_id" {
   description = "ID of the AWS account."
   type        = string
