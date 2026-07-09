@@ -6,7 +6,7 @@ locals {
   # Define additional account-level groups keyed by stable IDs.
   identity_groups = {
     platform_admins = {
-      display_name          = "Sandbox Platform Admins"
+      display_name          = "${trimspace(var.workspace_label)} Platform Admins"
       workspace_permissions = ["ADMIN"]
       entitlements = {
         allow_cluster_create  = true
@@ -15,7 +15,7 @@ locals {
       }
     }
     sandbox_data_engineers = {
-      display_name          = "Sandbox Data Engineers"
+      display_name          = "${trimspace(var.workspace_label)} Data Engineers"
       workspace_permissions = ["USER"]
       entitlements = {
         allow_cluster_create  = true
@@ -33,20 +33,20 @@ locals {
     giuliano = {
       user_name = "giulianoaltobelli@gmail.com"
       groups    = ["platform_admins"]
-      entitlements = {
+      entitlements = var.manage_identity_user_entitlements ? {
         allow_cluster_create  = true
         databricks_sql_access = true
         workspace_access      = true
-      }
+      } : null
     }
     galtobelli = {
       user_name = "giulianoaltobelli@outlook.com"
       groups    = ["sandbox_data_engineers"]
-      entitlements = {
+      entitlements = var.manage_identity_user_entitlements ? {
         allow_cluster_create  = true
         databricks_sql_access = true
         workspace_access      = true
-      }
+      } : null
     }
   }
 

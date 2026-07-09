@@ -155,6 +155,46 @@ variable "deployment_name" {
   nullable    = true
 }
 
+variable "workspace_label" {
+  description = "Human-readable workspace environment label used in Databricks group display names."
+  type        = string
+  default     = "Sandbox"
+
+  validation {
+    condition     = trimspace(var.workspace_label) != ""
+    error_message = "workspace_label must be non-empty."
+  }
+}
+
+variable "manage_identity_user_entitlements" {
+  description = "Whether to manage direct workspace user entitlements for local.identity_users. Group entitlements remain managed separately."
+  type        = bool
+  default     = true
+}
+
+variable "security_catalog_name" {
+  description = "Unity Catalog platform security catalog name for this workspace environment."
+  type        = string
+  default     = "dev_security"
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9_]*$", var.security_catalog_name))
+    error_message = "security_catalog_name must be lowercase snake_case and start with a letter."
+  }
+}
+
+variable "security_catalog_display_name" {
+  description = "Optional display name for the platform security catalog. Defaults to security_catalog_name."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.security_catalog_display_name == null || trimspace(var.security_catalog_display_name) != ""
+    error_message = "security_catalog_display_name must be null or non-empty."
+  }
+}
+
 variable "pricing_tier" {
   description = "Databricks pricing tier for workspace creation."
   type        = string

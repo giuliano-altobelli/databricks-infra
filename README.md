@@ -15,3 +15,30 @@
 ## Current scope
 
 This is the current onboarding and access process. We stop here for now and iterate as requirements become clearer.
+
+## Terraform workspace configs
+
+The shared regional Terraform root is `infra/aws/dbx/databricks/us-west-1`.
+Workspace-specific local backend and variable files live under `workspace/<workspace-name>` inside that root:
+
+- `workspace/sandbox-infra`
+- `workspace/prod-infra`
+
+The workspace var file controls the workspace name, Terraform state path, Databricks group display label, platform security catalog name, and whether direct per-user workspace entitlements are managed. Sandbox uses `dev_security`; prod uses `prod_security` and relies on group entitlements during bootstrap.
+
+Always select the workspace explicitly:
+
+```bash
+ROOT=infra/aws/dbx/databricks/us-west-1
+ENV=prod-infra
+
+DATABRICKS_AUTH_TYPE=oauth-m2m \
+TF_DATA_DIR="$PWD/$ROOT/workspace/$ENV/.terraform" \
+direnv exec "$ROOT" terraform -chdir="$ROOT" init -reconfigure \
+  -backend-config="workspace/$ENV/local.tfbackend"
+
+DATABRICKS_AUTH_TYPE=oauth-m2m \
+TF_DATA_DIR="$PWD/$ROOT/workspace/$ENV/.terraform" \
+direnv exec "$ROOT" terraform -chdir="$ROOT" plan \
+  -var-file="workspace/$ENV/terraform.tfvars"
+```

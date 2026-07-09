@@ -20,9 +20,14 @@
 - Always run `terraform` commands outside the sandbox.
 - Do not request permission before running `terraform` commands.
 
-## Terraform Scenario Vars
+## Terraform Workspace Vars
 
-- Use the scenario var files in `infra/aws/dbx/databricks/us-west-1`:
-  - `terraform.tfvars`: Premium + create workspace + managed networking.
-- Use this command pattern for all plan/apply runs:
-  - `DATABRICKS_AUTH_TYPE=oauth-m2m direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 <plan|apply> -var-file=terraform.tfvars`
+- The shared root module is `infra/aws/dbx/databricks/us-west-1`.
+- Workspace-specific local backends and var files live under `infra/aws/dbx/databricks/us-west-1/workspace/<workspace-name>`:
+  - `workspace/sandbox-infra/terraform.tfvars`: Premium + create workspace + managed networking.
+  - `workspace/prod-infra/terraform.tfvars`: Premium + create workspace + managed networking.
+- Do not keep a root-level `terraform.tfvars`; always select the workspace explicitly.
+- Use `TF_DATA_DIR` per workspace so backend metadata is isolated.
+- Use this command pattern for all init/plan/apply runs, replacing `<workspace-name>` with `sandbox-infra` or `prod-infra`:
+  - `DATABRICKS_AUTH_TYPE=oauth-m2m TF_DATA_DIR="$PWD/infra/aws/dbx/databricks/us-west-1/workspace/<workspace-name>/.terraform" direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 init -reconfigure -backend-config=workspace/<workspace-name>/local.tfbackend`
+  - `DATABRICKS_AUTH_TYPE=oauth-m2m TF_DATA_DIR="$PWD/infra/aws/dbx/databricks/us-west-1/workspace/<workspace-name>/.terraform" direnv exec infra/aws/dbx/databricks/us-west-1 terraform -chdir=infra/aws/dbx/databricks/us-west-1 <plan|apply> -var-file=workspace/<workspace-name>/terraform.tfvars`

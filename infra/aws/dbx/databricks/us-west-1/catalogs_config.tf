@@ -6,10 +6,10 @@ locals {
   governed_catalog_domains = {
     dev_security = {
       enabled             = true
-      display_name        = "dev_security"
+      display_name        = var.security_catalog_display_name == null ? var.security_catalog_name : trimspace(var.security_catalog_display_name)
       catalog_kind        = "governed"
       catalog_type        = "standard_security"
-      catalog_name        = "dev_security"
+      catalog_name        = var.security_catalog_name
       source              = "security"
       business_area       = ""
       catalog_admin_group = "platform_admins"

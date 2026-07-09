@@ -240,7 +240,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "unity_catalog" {
   bucket = aws_s3_bucket.unity_catalog_bucket[0].bucket
 
   rule {
-    bucket_key_enabled = true
+    blocked_encryption_types = ["SSE-C"]
+    bucket_key_enabled       = true
 
     apply_server_side_encryption_by_default {
       sse_algorithm     = "aws:kms"
