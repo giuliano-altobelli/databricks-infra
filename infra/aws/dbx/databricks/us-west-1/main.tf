@@ -140,23 +140,23 @@ module "log_delivery" {
 # The principal is assigned to the workspace
 # Workspace entitlements are applied
 # Users and Groups are account wide, but this module doesn't create users only groups
-# module "users_groups" {
-#   source = "./modules/databricks_identity/users_groups"
+module "users_groups" {
+  source = "./modules/databricks_identity/users_groups"
 
-#   providers = {
-#     databricks.mws       = databricks.mws
-#     databricks.workspace = databricks.created_workspace
-#   }
+  providers = {
+    databricks.mws       = databricks.mws
+    databricks.workspace = databricks.created_workspace
+  }
 
-#   workspace_id = local.workspace_id
-#   groups       = local.identity_groups
-#   users        = local.identity_users
+  workspace_id = local.workspace_id
+  groups       = local.identity_groups
+  users        = local.identity_users
 
-#   depends_on = [
-#     module.unity_catalog_metastore_assignment,
-#     module.user_assignment,
-#   ]
-# }
+  depends_on = [
+    module.unity_catalog_metastore_assignment,
+    module.user_assignment,
+  ]
+}
 
 # =============================================================================
 # Databricks Workspace Modules
