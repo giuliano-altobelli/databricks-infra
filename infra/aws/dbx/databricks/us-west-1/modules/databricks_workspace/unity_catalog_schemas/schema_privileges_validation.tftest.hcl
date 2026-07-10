@@ -12,7 +12,9 @@ run "accept_schema_object_privileges" {
           {
             principal = "Finance Readers"
             privileges = [
+              "CREATE_FUNCTION",
               "CREATE MATERIALIZED VIEW",
+              "CREATE_TABLE",
               "EXECUTE",
               "SELECT",
               "USE_SCHEMA",

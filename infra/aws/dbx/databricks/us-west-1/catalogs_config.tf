@@ -14,7 +14,32 @@ locals {
       business_area       = ""
       catalog_admin_group = "platform_admins"
       reader_group        = []
-      workspace_ids       = []
+      additional_grants = var.security_catalog_deployment_principal == null ? [] : [
+        {
+          principal  = trimspace(var.security_catalog_deployment_principal.application_id)
+          privileges = var.security_catalog_deployment_principal.catalog_privileges
+        }
+      ]
+      workspace_ids = []
+    }
+
+    personal = {
+      enabled             = var.enable_personal_catalog
+      display_name        = "personal"
+      catalog_kind        = "governed"
+      catalog_type        = "main_empty"
+      catalog_name        = "personal"
+      source              = "personal"
+      business_area       = ""
+      catalog_admin_group = "platform_admins"
+      reader_group        = []
+      additional_grants = [
+        {
+          principal  = local.identity_users.giuliano.user_name
+          privileges = ["USE_CATALOG"]
+        }
+      ]
+      workspace_ids = []
     }
 
     # salesforce_revenue = {
@@ -60,15 +85,21 @@ locals {
   normalized_governed_catalog_domains = {
     for catalog_key, domain in local.governed_catalog_domains :
     catalog_key => {
-      enabled                  = try(domain.enabled, true)
-      display_name             = trimspace(try(domain.display_name, ""))
-      catalog_kind             = trimspace(try(domain.catalog_kind, "governed"))
-      catalog_name             = trimspace(try(domain.catalog_name, ""))
-      source                   = trimspace(try(domain.source, ""))
-      business_area            = trimspace(try(domain.business_area, ""))
-      catalog_type             = trimspace(try(domain.catalog_type, ""))
-      catalog_admin_group      = trimspace(try(domain.catalog_admin_group, "platform_admins"))
-      reader_group             = [for group_key in try(domain.reader_group, []) : trimspace(group_key)]
+      enabled             = try(domain.enabled, true)
+      display_name        = trimspace(try(domain.display_name, ""))
+      catalog_kind        = trimspace(try(domain.catalog_kind, "governed"))
+      catalog_name        = trimspace(try(domain.catalog_name, ""))
+      source              = trimspace(try(domain.source, ""))
+      business_area       = trimspace(try(domain.business_area, ""))
+      catalog_type        = trimspace(try(domain.catalog_type, ""))
+      catalog_admin_group = trimspace(try(domain.catalog_admin_group, "platform_admins"))
+      reader_group        = [for group_key in try(domain.reader_group, []) : trimspace(group_key)]
+      additional_grants = [
+        for grant in try(domain.additional_grants, []) : {
+          principal  = trimspace(grant.principal)
+          privileges = distinct([for privilege in grant.privileges : trimspace(privilege)])
+        }
+      ]
       managed_volume_overrides = try(domain.managed_volume_overrides, null) == null ? {} : try(domain.managed_volume_overrides, {})
       workspace_ids            = [for workspace_id in try(domain.workspace_ids, []) : trimspace(workspace_id)]
     }
@@ -95,6 +126,7 @@ locals {
         for group_key in domain.reader_group :
         try(local.identity_groups[group_key].display_name, "")
       ]
+      additional_grants        = domain.additional_grants
       managed_volume_overrides = (domain.catalog_kind == "" ? "governed" : domain.catalog_kind) == "governed" ? domain.managed_volume_overrides : {}
       workspace_ids            = domain.workspace_ids
     }
@@ -230,6 +262,7 @@ module "governed_catalogs" {
   catalog_name              = each.value.catalog_name
   catalog_admin_principal   = each.value.catalog_admin_principal
   catalog_reader_principals = each.value.catalog_reader_principals
+  additional_catalog_grants = each.value.additional_grants
   workspace_ids             = each.value.workspace_ids
   set_default_namespace     = false
 

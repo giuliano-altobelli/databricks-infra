@@ -4,6 +4,17 @@ locals {
   normalized_catalog_reader_principals = [
     for principal in var.catalog_reader_principals : trimspace(principal)
   ]
+  normalized_additional_catalog_grants = [
+    for grant in var.additional_catalog_grants : {
+      principal  = trimspace(grant.principal)
+      privileges = sort(distinct([for privilege in grant.privileges : trimspace(privilege)]))
+    }
+  ]
+  all_catalog_grant_principals = concat(
+    [trimspace(var.catalog_admin_principal)],
+    local.normalized_catalog_reader_principals,
+    [for grant in local.normalized_additional_catalog_grants : grant.principal],
+  )
 
   resource_name_base      = "${var.resource_prefix}-${local.aws_safe_catalog_suffix}-${var.workspace_id}"
   uc_iam_role             = local.resource_name_base
@@ -58,6 +69,11 @@ resource "null_resource" "previous" {
     precondition {
       condition     = !var.enabled || trimspace(var.catalog_admin_principal) != ""
       error_message = "catalog_admin_principal must be non-empty when enabled is true."
+    }
+
+    precondition {
+      condition     = !var.enabled || length(local.all_catalog_grant_principals) == length(distinct(local.all_catalog_grant_principals))
+      error_message = "Catalog admin, reader, and additional grant principals must be unique."
     }
 
     precondition {
@@ -191,7 +207,7 @@ data "databricks_aws_unity_catalog_policy" "unity_catalog" {
   aws_partition  = var.aws_assume_partition
   bucket_name    = local.catalog_bucket_name
   role_name      = local.uc_iam_role
-  kms_name       = aws_kms_alias.catalog_storage_key_alias[0].arn
+  kms_name       = aws_kms_key.catalog_storage[0].arn
 }
 
 resource "aws_iam_policy" "unity_catalog" {
@@ -379,6 +395,15 @@ resource "databricks_grants" "workspace_catalog" {
     content {
       principal  = grant.value
       privileges = ["USE_CATALOG", "EXTERNAL USE SCHEMA"]
+    }
+  }
+
+  dynamic "grant" {
+    for_each = local.normalized_additional_catalog_grants
+
+    content {
+      principal  = grant.value.principal
+      privileges = grant.value.privileges
     }
   }
 

@@ -43,6 +43,8 @@ Examples:
   - governed `prod_*` `uat` schemas
 - The governed-path `main` catalog is catalog-level only in this pattern; it intentionally has no schemas.
 - The workspace default namespace remains unchanged for now; future recommendation is to set it to `personal` to reduce accidental writes into governed catalogs.
+- Each workspace's existing bundle deployment service principal is represented explicitly in Terraform by application ID. It receives `USE_CATALOG` plus `CREATE_TABLE`/`USE_SCHEMA` on the environment's security-catalog `access_maps` schema and `CREATE_FUNCTION`/`USE_SCHEMA` on its `policies` schema.
+- The `personal` catalog is enabled only in the personal-development workspace, not in production. Its developer receives `USE_CATALOG` plus create/use privileges only on that developer's personal schema.
 
 Detailed design: `docs/design-docs/unity-catalog.md`
 

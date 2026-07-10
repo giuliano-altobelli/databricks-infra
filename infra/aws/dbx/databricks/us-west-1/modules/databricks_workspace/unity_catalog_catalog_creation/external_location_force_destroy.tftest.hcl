@@ -16,6 +16,10 @@ run "catalog_external_location_force_destroy_enabled" {
     catalog_reader_principals = [
       "Revenue Readers",
     ]
+    additional_catalog_grants = [{
+      principal  = "00000000-0000-0000-0000-000000000001"
+      privileges = ["CREATE_SCHEMA", "USE_CATALOG"]
+    }]
   }
 
   assert {
@@ -31,5 +35,17 @@ run "catalog_external_location_force_destroy_enabled" {
       if grant.principal == "Revenue Readers"
     ])
     error_message = "Catalog reader principals must receive both USE_CATALOG and EXTERNAL USE SCHEMA."
+  }
+
+
+  assert {
+    condition = length([
+      for grant in databricks_grants.workspace_catalog[0].grant : grant
+      if grant.principal == "00000000-0000-0000-0000-000000000001"
+      ]) == 1 && toset([
+      for grant in databricks_grants.workspace_catalog[0].grant : grant.privileges
+      if grant.principal == "00000000-0000-0000-0000-000000000001"
+    ][0]) == toset(["CREATE_SCHEMA", "USE_CATALOG"])
+    error_message = "Additional catalog grants must preserve their exact principal privilege list."
   }
 }

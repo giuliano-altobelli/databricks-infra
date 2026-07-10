@@ -59,10 +59,10 @@ variable "schemas" {
       for schema in values(var.schemas) : [
         for grant in schema.grants : [
           for privilege in grant.privileges :
-          contains(["ALL_PRIVILEGES", "CREATE MATERIALIZED VIEW", "EXECUTE", "SELECT", "USE_SCHEMA"], privilege)
+          contains(["ALL_PRIVILEGES", "CREATE_FUNCTION", "CREATE MATERIALIZED VIEW", "CREATE_TABLE", "EXECUTE", "SELECT", "USE_SCHEMA"], privilege)
         ]
       ]
     ]))
-    error_message = "Schema grant privileges must be one of: ALL_PRIVILEGES, CREATE MATERIALIZED VIEW, EXECUTE, SELECT, USE_SCHEMA."
+    error_message = "Schema grant privileges must be one of: ALL_PRIVILEGES, CREATE_FUNCTION, CREATE MATERIALIZED VIEW, CREATE_TABLE, EXECUTE, SELECT, USE_SCHEMA."
   }
 }

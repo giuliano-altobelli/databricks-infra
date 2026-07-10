@@ -4,6 +4,50 @@
 
 locals {
   governed_schema_config = {
+    dev_security = {
+      access_maps = {
+        grants = concat(
+          [{
+            principal  = local.identity_groups.platform_admins.display_name
+            privileges = ["ALL_PRIVILEGES"]
+          }],
+          length(try(var.security_catalog_deployment_principal.schema_privileges.access_maps, [])) == 0 ? [] : [{
+            principal  = trimspace(try(var.security_catalog_deployment_principal.application_id, ""))
+            privileges = try(var.security_catalog_deployment_principal.schema_privileges.access_maps, [])
+          }],
+        )
+      }
+
+      policies = {
+        grants = concat(
+          [{
+            principal  = local.identity_groups.platform_admins.display_name
+            privileges = ["ALL_PRIVILEGES"]
+          }],
+          length(try(var.security_catalog_deployment_principal.schema_privileges.policies, [])) == 0 ? [] : [{
+            principal  = trimspace(try(var.security_catalog_deployment_principal.application_id, ""))
+            privileges = try(var.security_catalog_deployment_principal.schema_privileges.policies, [])
+          }],
+        )
+      }
+    }
+
+    personal = {
+      giulianoaltobelli = {
+        comment = "Personal development schema for giulianoaltobelli."
+        grants = [
+          {
+            principal  = local.identity_groups.platform_admins.display_name
+            privileges = ["ALL_PRIVILEGES"]
+          },
+          {
+            principal  = local.identity_users.giuliano.user_name
+            privileges = ["CREATE_FUNCTION", "CREATE_TABLE", "USE_SCHEMA"]
+          },
+        ]
+      }
+    }
+
     # Add catalog-specific governed schemas or replace template-derived schema
     # grants here. This file remains the source of truth for created schemas.
     # Schema grants are authoritative allow-lists, so excluding a principal
