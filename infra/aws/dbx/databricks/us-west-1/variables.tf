@@ -195,6 +195,35 @@ variable "security_catalog_display_name" {
   }
 }
 
+variable "security_catalog_deployment_principal" {
+  description = "Existing Databricks bundle deployment principal and its authoritative platform security catalog/schema grants."
+  type = object({
+    application_id     = string
+    catalog_privileges = list(string)
+    schema_privileges  = map(list(string))
+  })
+  default  = null
+  nullable = true
+
+  validation {
+    condition = var.security_catalog_deployment_principal == null || (
+      can(regex("^[0-9a-fA-F-]{36}$", trimspace(var.security_catalog_deployment_principal.application_id))) &&
+      length(var.security_catalog_deployment_principal.catalog_privileges) > 0 &&
+      alltrue([
+        for privileges in values(var.security_catalog_deployment_principal.schema_privileges) :
+        length(privileges) > 0
+      ])
+    )
+    error_message = "security_catalog_deployment_principal must use a UUID application_id and non-empty catalog/schema privilege lists."
+  }
+}
+
+variable "enable_personal_catalog" {
+  description = "Whether to create the personal development catalog and its configured user schemas in this workspace."
+  type        = bool
+  default     = false
+}
+
 variable "pricing_tier" {
   description = "Databricks pricing tier for workspace creation."
   type        = string

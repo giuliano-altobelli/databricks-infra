@@ -34,6 +34,7 @@ module "revenue_catalog" {
 - The module is workspace-scoped only and must not use `databricks.mws`.
 - AWS-safe names derive from `replace(catalog_name, "_", "-")`.
 - The AWS-safe suffix feeds bucket, IAM, KMS alias, storage credential, and external location names. The governed rollout uses that suffix in patterns such as `${resource_prefix}-${replace(catalog_name, "_", "-")}-${workspace_id}`.
+- The generated Unity Catalog IAM policy grants KMS cryptographic operations on the key ARN. The alias remains a managed naming resource but is not used as the IAM policy resource.
 - `set_default_namespace` defaults to `false`. The module should not change the workspace default namespace unless the caller opts in.
 
 ## Workspace Visibility
@@ -54,6 +55,8 @@ If an existing catalog module instance was created before this setting existed, 
 - Catalog grants are authoritative through `databricks_grants`.
 - `catalog_admin_principal` receives `ALL_PRIVILEGES`.
 - Each principal in `catalog_reader_principals` receives `USE_CATALOG` and `EXTERNAL USE SCHEMA`.
+- `additional_catalog_grants` preserves explicit privilege lists for existing principals, such as workspace bundle deployment service principals that do not fit the reader role.
+- The admin, reader, and additional principal sets must not overlap.
 - `set_default_namespace` only changes the workspace default namespace; it does not change grant ownership.
 
 ## Outputs

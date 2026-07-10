@@ -79,6 +79,25 @@ variable "catalog_reader_principals" {
   }
 }
 
+variable "additional_catalog_grants" {
+  description = "Additional authoritative catalog grants for existing Databricks principals."
+  type = list(object({
+    principal  = string
+    privileges = list(string)
+  }))
+  default = []
+
+  validation {
+    condition = !var.enabled || alltrue([
+      for grant in var.additional_catalog_grants :
+      trimspace(grant.principal) != "" && length(grant.privileges) > 0 && alltrue([
+        for privilege in grant.privileges : trimspace(privilege) != ""
+      ])
+    ])
+    error_message = "additional_catalog_grants must contain non-empty principals and privilege lists."
+  }
+}
+
 variable "workspace_id" {
   description = "workspace ID of deployed workspace."
   type        = string

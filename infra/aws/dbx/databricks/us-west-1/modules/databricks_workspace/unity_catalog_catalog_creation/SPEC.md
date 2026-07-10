@@ -43,6 +43,7 @@
 - Optional inputs:
   - `enabled` (`bool`, default `true`)
   - `catalog_reader_principals` (`list(string)`, default `[]`)
+  - `additional_catalog_grants` (`list(object({ principal = string, privileges = list(string) }))`, default `[]`)
   - `workspace_ids` (`list(string)`, default `[]`)
   - `set_default_namespace` (`bool`, default `false`)
 - Outputs:
@@ -80,7 +81,7 @@
 - When `enabled = true`, the module follows the approved one-pass bootstrap sequence:
   1. Create the AWS KMS key and alias for the catalog bucket.
   2. Create the Databricks storage credential first using the planned IAM role ARN so Databricks emits `external_id` and `unity_catalog_iam_arn`.
-  3. Build the AWS IAM assume-role policy and Unity Catalog access policy inputs from those trust values.
+  3. Build the AWS IAM assume-role policy and Unity Catalog access policy inputs from those trust values. The Unity Catalog access policy must authorize KMS cryptographic operations against the KMS key ARN, not its alias ARN.
   4. Create the IAM role, IAM policy, and policy attachment.
   5. Create the S3 bucket plus encryption and public-access settings.
   6. Create the Databricks external location for the bucket root.
@@ -101,6 +102,8 @@
   - the governed path manages catalog grants authoritatively through `databricks_grants`
   - `catalog_admin_principal` receives `ALL_PRIVILEGES`
   - each entry in `catalog_reader_principals` receives `USE_CATALOG` and `EXTERNAL USE SCHEMA`
+  - each entry in `additional_catalog_grants` receives its explicitly declared catalog privileges; these entries support pre-existing deployment principals whose access does not match the reader role
+  - admin, reader, and additional-grant principals must be unique so one principal is represented by exactly one authoritative grant block
   - `set_default_namespace` only changes the workspace default namespace and does not alter grant ownership
 - Teardown behavior:
   - the module sets `force_destroy = true` on the catalog bootstrap external location so Databricks can delete the location after volumes, schemas, and the catalog are gone and Unity Catalog can no longer purge managed storage data under that path
@@ -112,6 +115,7 @@
 - The module must not introduce open/shared catalog mode in this rollout.
 - Duplicate workspace-binding tuples must fail clearly rather than being silently deduplicated.
 - Generated S3, IAM, KMS, and Databricks identifiers must fail early if they exceed provider-specific naming rules or length limits.
+- KMS cryptographic permissions must name the KMS key ARN because AWS evaluates those operations against the key resource; an alias ARN does not authorize use of its target key.
 - Expected runtime failure cases outside static validation:
   - Databricks storage credential creation fails despite the approved one-pass bootstrap sequence
   - external location creation fails because bucket or IAM permissions are incomplete
@@ -127,6 +131,7 @@
   - blank `catalog_name` when enabled
   - blank `catalog_admin_principal` when enabled
   - blank or duplicate `catalog_reader_principals` entries when enabled
+  - blank additional-grant principals, empty additional-grant privilege lists, or principals duplicated across the admin, reader, and additional-grant sets
   - blank or non-numeric `workspace_id` when enabled
   - blank or non-numeric entries in `workspace_ids`
   - duplicate workspace-binding tuples

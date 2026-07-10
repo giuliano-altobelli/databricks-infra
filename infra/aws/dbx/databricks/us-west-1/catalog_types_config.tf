@@ -52,10 +52,10 @@ locals {
     #   }
     # }
     #
-    # main_empty = {
-    #   schemas         = {}
-    #   managed_volumes = {}
-    # }
+    main_empty = {
+      schemas         = {}
+      managed_volumes = {}
+    }
     standard_security = {
       schemas = {
         access_audit = {
