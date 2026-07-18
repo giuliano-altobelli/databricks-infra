@@ -4,6 +4,7 @@ run "catalog" {
   command = plan
 
   variables {
+    dependencies = ["ready"]
     policies = {
       restrict_region = {
         scope = {

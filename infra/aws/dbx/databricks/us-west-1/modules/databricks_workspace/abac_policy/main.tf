@@ -123,5 +123,14 @@ resource "databricks_policy_info" "policy" {
     ]
   }
 
+  lifecycle {
+    precondition {
+      condition = alltrue([
+        for dependency in var.dependencies : trimspace(dependency) != ""
+      ])
+      error_message = "Policy dependencies must be non-empty resource identifiers."
+    }
+  }
+
   depends_on = [module.validation]
 }

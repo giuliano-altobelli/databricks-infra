@@ -30,6 +30,7 @@
 
 - Optional inputs:
   - `enabled` (`bool`, default `true`)
+  - `dependencies` (`set(string)`, default `[]`)
   - `policies` (`map(object)`, default `{}`), keyed by policy name
   - `policies[*].scope.catalog` (`string`)
   - `policies[*].scope.schema` (`optional(string)`)
@@ -55,6 +56,7 @@
 - Column aliases are rendered as `match_columns` and passed to `row_filter.using` in first, second, third order.
 - Governed-tag and function data sources are read during planning.
 - Validation completes before policy creation through an explicit dependency on the internal validation component.
+- External dependency identifiers delay policy creation without delaying governed-tag or function validation.
 
 ## Constraints and Failure Modes
 

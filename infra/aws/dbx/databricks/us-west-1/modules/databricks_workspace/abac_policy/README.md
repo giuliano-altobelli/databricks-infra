@@ -12,6 +12,8 @@ module "abac_policy" {
     databricks = databricks.created_workspace
   }
 
+  dependencies = [databricks_grant.policy_function.id]
+
   policies = {
     restrict_tenant = {
       scope = {
@@ -45,6 +47,8 @@ module "abac_policy" {
 ```
 
 Omit `scope.schema` for catalog scope. Omit `table` to apply the policy to every table in scope. `columns.first` is required; `columns.second` and `columns.third` are optional. Column aliases are passed to the row-filter function in first, second, third order.
+
+Use `dependencies` for external prerequisites such as an `EXECUTE` grant on the policy UDF. Dependencies delay only policy creation; governed-tag and function validation still runs during planning.
 
 ## Plan-Time Validation
 

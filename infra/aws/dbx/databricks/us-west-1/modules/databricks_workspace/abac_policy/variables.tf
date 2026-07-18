@@ -4,6 +4,12 @@ variable "enabled" {
   default     = true
 }
 
+variable "dependencies" {
+  description = "External prerequisite resource identifiers that must exist before policy creation."
+  type        = set(string)
+  default     = []
+}
+
 variable "policies" {
   description = "Unity Catalog ABAC row-filter policies keyed by policy name."
   type = map(object({
