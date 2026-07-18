@@ -3,6 +3,14 @@ mock_provider "databricks" {}
 mock_provider "null" {}
 mock_provider "time" {}
 
+override_resource {
+  target          = aws_kms_key.catalog_storage
+  override_during = plan
+  values = {
+    arn = "arn:aws:kms:us-west-2:123456789012:key/00000000-0000-0000-0000-000000000000"
+  }
+}
+
 run "catalog_external_location_force_destroy_enabled" {
   command = plan
 
@@ -25,6 +33,19 @@ run "catalog_external_location_force_destroy_enabled" {
   assert {
     condition     = databricks_external_location.workspace_catalog_external_location[0].force_destroy == true
     error_message = "Catalog bootstrap external locations must enable force_destroy for teardown after managed storage dependents are gone."
+  }
+
+  assert {
+    condition     = try(time_sleep.wait_60_seconds[0].triggers.iam_role_name, null) == "test-prod-test-catalog-1234567890123456"
+    error_message = "The IAM propagation wait must rerun when the derived catalog IAM role name changes."
+  }
+
+  assert {
+    condition = (
+      try(databricks_external_location.workspace_catalog_external_location[0].encryption_details[0].sse_encryption_details[0].algorithm, null) == "AWS_SSE_KMS" &&
+      try(databricks_external_location.workspace_catalog_external_location[0].encryption_details[0].sse_encryption_details[0].aws_kms_key_arn, null) == aws_kms_key.catalog_storage[0].arn
+    )
+    error_message = "Catalog bootstrap external locations must use AWS_SSE_KMS with the catalog storage key ARN."
   }
 
   assert {

@@ -84,7 +84,7 @@
   3. Build the AWS IAM assume-role policy and Unity Catalog access policy inputs from those trust values. The Unity Catalog access policy must authorize KMS cryptographic operations against the KMS key ARN, not its alias ARN.
   4. Create the IAM role, IAM policy, and policy attachment.
   5. Create the S3 bucket plus encryption and public-access settings.
-  6. Create the Databricks external location for the bucket root.
+  6. Create the Databricks external location for the bucket root and configure its client encryption details as `AWS_SSE_KMS` with the catalog KMS key ARN.
   7. Create the Databricks catalog with workspace-isolated visibility.
   8. Create explicit `databricks_workspace_binding` resources only for additional `workspace_ids`; the creating workspace relies on Databricks' implicit isolated binding.
   9. Create one authoritative catalog admin grant set for `catalog_admin_principal`.
@@ -93,6 +93,7 @@
   - preserve the current single-apply bootstrap pattern
   - do not introduce a caller-facing staged apply or `skip_validation` toggle
   - keep the internal wait and ordering guard between IAM readiness and external-location validation
+  - rerun the wait when the derived IAM role name changes so catalog renames do not reuse a completed wait from the prior role
   - treat first-apply bootstrap failures as implementation defects against the approved one-pass contract
 - Workspace binding behavior:
   - the creating workspace relies on Databricks' implicit isolated binding and is not managed through explicit `databricks_workspace_binding` resources
@@ -116,6 +117,7 @@
 - Duplicate workspace-binding tuples must fail clearly rather than being silently deduplicated.
 - Generated S3, IAM, KMS, and Databricks identifiers must fail early if they exceed provider-specific naming rules or length limits.
 - KMS cryptographic permissions must name the KMS key ARN because AWS evaluates those operations against the key resource; an alias ARN does not authorize use of its target key.
+- The external location must advertise the same KMS key ARN used by the bucket so Databricks S3 clients send the required SSE-KMS request headers.
 - Expected runtime failure cases outside static validation:
   - Databricks storage credential creation fails despite the approved one-pass bootstrap sequence
   - external location creation fails because bucket or IAM permissions are incomplete
@@ -138,6 +140,8 @@
   - invalid generated S3 bucket names
   - generated AWS or Databricks identifiers that exceed provider name limits
   - external-location `force_destroy` passthrough via `terraform test`
+  - external-location SSE-KMS algorithm and key ARN wiring via `terraform test`
+  - IAM propagation wait trigger wiring via `terraform test`
   - catalog reader grants include both `USE_CATALOG` and `EXTERNAL USE SCHEMA` via `terraform test`
 - Verification commands:
   - `terraform -chdir=infra/aws/dbx/databricks/us-west-1/modules/databricks_workspace/unity_catalog_catalog_creation init -backend=false`

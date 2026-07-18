@@ -23,6 +23,19 @@ locals {
       workspace_ids = []
     }
 
+    abac_demo = {
+      enabled             = var.enable_abac_demo_catalog
+      display_name        = var.abac_demo_catalog_display_name == null ? var.abac_demo_catalog_name : trimspace(var.abac_demo_catalog_display_name)
+      catalog_kind        = "governed"
+      catalog_type        = "abac_policy_demo"
+      catalog_name        = var.abac_demo_catalog_name
+      source              = "abac_demo"
+      business_area       = ""
+      catalog_admin_group = "platform_admins"
+      reader_group        = []
+      workspace_ids       = []
+    }
+
     personal = {
       enabled             = var.enable_personal_catalog
       display_name        = "personal"
@@ -151,6 +164,15 @@ check "governed_catalog_sources" {
       !domain.enabled || (domain.source != "" && can(regex("^[a-z0-9_]+$", domain.source)))
     ])
     error_message = "Each governed catalog source must be non-empty lowercase snake_case."
+  }
+}
+
+check "abac_demo_catalog_name_wiring" {
+  assert {
+    condition = !var.enable_abac_demo_catalog || (
+      local.derived_governed_catalogs["abac_demo"].catalog_name == var.abac_demo_catalog_name
+    )
+    error_message = "The enabled abac_demo catalog must use var.abac_demo_catalog_name."
   }
 }
 

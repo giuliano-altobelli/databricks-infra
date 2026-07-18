@@ -35,6 +35,7 @@ module "revenue_catalog" {
 - AWS-safe names derive from `replace(catalog_name, "_", "-")`.
 - The AWS-safe suffix feeds bucket, IAM, KMS alias, storage credential, and external location names. The governed rollout uses that suffix in patterns such as `${resource_prefix}-${replace(catalog_name, "_", "-")}-${workspace_id}`.
 - The generated Unity Catalog IAM policy grants KMS cryptographic operations on the key ARN. The alias remains a managed naming resource but is not used as the IAM policy resource.
+- The external location advertises `AWS_SSE_KMS` with that same key ARN so Databricks S3 clients use the catalog bucket's encryption configuration.
 - `set_default_namespace` defaults to `false`. The module should not change the workspace default namespace unless the caller opts in.
 
 ## Workspace Visibility

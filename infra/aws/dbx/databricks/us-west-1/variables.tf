@@ -195,6 +195,29 @@ variable "security_catalog_display_name" {
   }
 }
 
+variable "abac_demo_catalog_name" {
+  description = "Unity Catalog ABAC policy demonstration catalog name for this workspace environment."
+  type        = string
+  default     = "dev_abac_demo"
+
+  validation {
+    condition     = can(regex("^(dev|prod)_[a-z0-9_]+$", var.abac_demo_catalog_name))
+    error_message = "abac_demo_catalog_name must be lowercase snake_case and start with dev_ or prod_."
+  }
+}
+
+variable "abac_demo_catalog_display_name" {
+  description = "Optional display name for the ABAC policy demonstration catalog. Defaults to abac_demo_catalog_name."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.abac_demo_catalog_display_name == null || trimspace(var.abac_demo_catalog_display_name) != ""
+    error_message = "abac_demo_catalog_display_name must be null or non-empty."
+  }
+}
+
 variable "security_catalog_deployment_principal" {
   description = "Existing Databricks bundle deployment principal and its authoritative platform security catalog/schema grants."
   type = object({
@@ -220,6 +243,12 @@ variable "security_catalog_deployment_principal" {
 
 variable "enable_personal_catalog" {
   description = "Whether to create the personal development catalog and its configured user schemas in this workspace."
+  type        = bool
+  default     = false
+}
+
+variable "enable_abac_demo_catalog" {
+  description = "Whether to create the workspace ABAC policy demonstration catalog and schema."
   type        = bool
   default     = false
 }

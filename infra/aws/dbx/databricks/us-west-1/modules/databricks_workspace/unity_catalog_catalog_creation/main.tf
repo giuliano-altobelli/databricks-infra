@@ -124,9 +124,18 @@ resource "null_resource" "previous" {
 
 # Wait to prevent race condition between IAM role and external location validation.
 resource "time_sleep" "wait_60_seconds" {
-  count           = var.enabled ? 1 : 0
-  depends_on      = [null_resource.previous]
+  count = var.enabled ? 1 : 0
+
   create_duration = "60s"
+
+  triggers = {
+    iam_role_name = local.uc_iam_role
+  }
+
+  depends_on = [
+    null_resource.previous,
+    aws_iam_role_policy_attachment.unity_catalog_attach,
+  ]
 }
 
 resource "aws_kms_key" "catalog_storage" {
@@ -287,6 +296,13 @@ resource "databricks_external_location" "workspace_catalog_external_location" {
   comment         = "External location for catalog ${var.catalog_name}"
   force_destroy   = true
   isolation_mode  = "ISOLATION_MODE_ISOLATED"
+
+  encryption_details {
+    sse_encryption_details {
+      algorithm       = "AWS_SSE_KMS"
+      aws_kms_key_arn = aws_kms_key.catalog_storage[0].arn
+    }
+  }
 
   depends_on = [
     aws_iam_role_policy_attachment.unity_catalog_attach,

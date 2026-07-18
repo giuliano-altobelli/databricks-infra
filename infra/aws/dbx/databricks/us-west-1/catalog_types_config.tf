@@ -29,6 +29,16 @@ locals {
       managed_volumes = {}
     }
 
+    abac_policy_demo = {
+      schemas = {
+        protected = {
+          comment = "Schema for validating tag-constrained ABAC row-filter policies."
+        }
+      }
+
+      managed_volumes = {}
+    }
+
     # shared_ml_assets = {
     #   schemas = {
     #     raw     = {}

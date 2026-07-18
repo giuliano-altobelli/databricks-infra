@@ -19,6 +19,11 @@ This repository currently targets a **single Databricks workspace**. Unity Catal
     - `reference`: governance reference tables
     - `policies`: policy-supporting UDFs/functions
   - Does not inherit normal governed domain-reader access semantics
+- **ABAC policy demonstration catalog:**
+  - `dev_abac_demo` in the development workspace
+  - `prod_abac_demo` in the production workspace
+  - Contains only the `protected` schema used to exercise catalog- and schema-scoped policy behavior
+  - The environment-specific catalog name is supplied by workspace variables, following the `dev_security`/`prod_security` pattern
 - **Personal development catalog:** `personal`
   - Schemas: `personal.<user_key>` for each user present in the workspace-level `okta-databricks-users` group
   - `<user_key>` is derived from the user's normalized email local part (example: `jane.doe@company.com` -> `jane_doe`)
