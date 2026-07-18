@@ -1,3 +1,20 @@
+locals {
+  abac = {
+    (var.abac.name) = {
+      scope = {
+        catalog = local.derived_governed_catalogs["abac_demo"].catalog_name
+      }
+      principals = var.abac.principals
+      table      = var.abac.table
+      columns = {
+        first = var.abac.column
+      }
+      function = join(".", [var.security_catalog_name, var.abac.function.schema, var.abac.function.name])
+      comment  = var.abac.comment
+    }
+  }
+}
+
 data "databricks_current_user" "deployment" {
   provider = databricks.created_workspace
 }
@@ -6,7 +23,7 @@ resource "databricks_grant" "abac" {
   count    = var.enable_abac_demo_catalog ? 1 : 0
   provider = databricks.created_workspace
 
-  function   = "${var.security_catalog_name}.policies.can_read_okta_group"
+  function   = one(values(local.abac)).function
   principal  = data.databricks_current_user.deployment.user_name
   privileges = ["EXECUTE"]
 }
@@ -22,28 +39,5 @@ module "abac_policy" {
   dependencies = toset([
     for grant in databricks_grant.abac : grant.id
   ])
-  policies = {
-    abac_demo_okta_group_row_filter = {
-      scope = {
-        catalog = local.derived_governed_catalogs["abac_demo"].catalog_name
-      }
-      principals = {
-        include = ["okta-databricks-users"]
-        exclude = ["giulianoaltobelli@gmail.com"]
-      }
-      table = {
-        key   = "abac_boundary"
-        value = "abac_general_access_okta_group"
-      }
-      columns = {
-        first = {
-          key   = "protected_column"
-          value = "okta_group_names"
-          alias = "okta_group_names_value"
-        }
-      }
-      function = "${var.security_catalog_name}.policies.can_read_okta_group"
-      comment  = "Filter governed demo rows by the querying user's Okta group membership."
-    }
-  }
+  policies = local.abac
 }

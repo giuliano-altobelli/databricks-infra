@@ -218,6 +218,55 @@ variable "abac_demo_catalog_display_name" {
   }
 }
 
+variable "abac" {
+  description = "ABAC row-filter policy applied to the demonstration catalog."
+  type = object({
+    name    = string
+    comment = string
+    table = object({
+      key   = string
+      value = string
+    })
+    column = object({
+      key   = string
+      value = string
+      alias = string
+    })
+    function = object({
+      schema = string
+      name   = string
+    })
+    principals = object({
+      include = set(string)
+      exclude = set(string)
+    })
+  })
+
+  validation {
+    condition = alltrue([for value in concat(
+      [
+        var.abac.name,
+        var.abac.comment,
+        var.abac.table.key,
+        var.abac.table.value,
+        var.abac.column.key,
+        var.abac.column.value,
+        var.abac.column.alias,
+        var.abac.function.schema,
+        var.abac.function.name,
+      ],
+      tolist(var.abac.principals.include),
+      tolist(var.abac.principals.exclude),
+    ) : trimspace(value) != ""])
+    error_message = "ABAC policy values must be non-empty."
+  }
+
+  validation {
+    condition     = length(var.abac.principals.include) > 0
+    error_message = "The ABAC policy must include at least one principal."
+  }
+}
+
 variable "security_catalog_deployment_principal" {
   description = "Existing Databricks bundle deployment principal and its authoritative platform security catalog/schema grants."
   type = object({
