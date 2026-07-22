@@ -35,7 +35,7 @@ module "abac_policy" {
     databricks = databricks.created_workspace
   }
 
-  enabled = var.enable_abac_demo_catalog
+  enabled = false
   dependencies = toset([
     for grant in databricks_grant.abac : grant.id
   ])
